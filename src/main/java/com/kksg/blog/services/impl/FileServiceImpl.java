@@ -35,7 +35,6 @@ public class FileServiceImpl implements FileService {
 		//Step-3: Full Path of the Image
 		String filePath = path + File.separator + fileName1;
 		
-		
 		//STEP-4: creating folder if not created
 		
 		File f = new File(path);
