@@ -15,13 +15,13 @@ import com.kksg.blog.payloads.CommentsDto;
 import com.kksg.blog.services.CommentsService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class CommentController {
 
 	@Autowired
 	private CommentsService commentsService;
 	
-	@PostMapping("/post/{postId}/comment/add")
+	@PostMapping("/post/{postId}/comment")
 	public ResponseEntity<CommentsDto> createComment(
 			@RequestBody CommentsDto commentsDto,
 			@PathVariable Integer postId) {

@@ -13,6 +13,7 @@ import com.kksg.blog.entities.Role;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
 import com.kksg.blog.payloads.UserDto;
+import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.RoleRepo;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.UserService;
@@ -31,6 +32,9 @@ public class UserServiceImpl implements UserService {
 	
 	@Autowired
 	private RoleRepo roleRepo;
+	
+	@Autowired
+	private PostRepo postRepo;
 	
 	@Override
 	public UserDto createUser(UserDto userDto) {
@@ -75,9 +79,11 @@ public class UserServiceImpl implements UserService {
 	public void deleteUser(Integer userId) {
 		User user = this.userRepo.findById(userId).orElseThrow(
 					()-> new ResourceNotFoundException("User", " Id ", userId));
+		user.getRoles().clear();
+		postRepo.deleteAll(user.getPosts());
+		//this.postRepo.deleteAll(user.getPosts());
+		//userRepo.save(user);
 		userRepo.delete(user);
-		
-
 	}
 	
 
@@ -102,7 +108,6 @@ public class UserServiceImpl implements UserService {
 	}
 
 	//user to dto we are converting it manually
-	
 	public UserDto userToDtoUser(User user) {
 		UserDto userDto = this.modelMapper.map(user, UserDto.class);
 		return userDto;
@@ -117,7 +122,7 @@ public class UserServiceImpl implements UserService {
 		//encoding the password
 		user.setPassword(this.passwordEncoder.encode(user.getPassword()));
 		
-		//
+		//setting the default role
 		Role role = this.roleRepo.findById(AppConstants.NORLMAL_USER).get();
 		
 		user.getRoles().add(role);

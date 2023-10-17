@@ -53,9 +53,10 @@ public class AuthContoller {
 		this.authenticate(request.getUsername(), request.getPassword());
 		UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.getUsername());
 		String generatedToken = this.jwtTokenHelper.generateToken(userDetails);
-
+		
 		JwtAuthResponse response = new JwtAuthResponse();
 		response.setToken(generatedToken);
+		response.setUser(mapper.map((User) userDetails, UserDto.class));
 		return new ResponseEntity<JwtAuthResponse>(response, HttpStatus.OK);
 	}
 

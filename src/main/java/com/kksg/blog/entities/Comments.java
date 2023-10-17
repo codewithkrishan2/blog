@@ -21,6 +21,8 @@ public class Comments {
 	
 	private String content;
 	
+	private String username;
+	
 	@ManyToOne
 	private Post post;
 }

@@ -42,6 +42,7 @@ public class User implements UserDetails {
     @Column(name = "user_name", nullable = false, length = 100)
     private String name;
     
+    @Column(unique = true)
     private String email;
     
     private String password;
@@ -49,11 +50,12 @@ public class User implements UserDetails {
     private String about;
     //private String role;
     
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
     
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user", referencedColumnName = "userId"), inverseJoinColumns = @JoinColumn(name = "role", referencedColumnName = "roleId"))
+    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user", referencedColumnName = "userId"),
+    			inverseJoinColumns = @JoinColumn(name = "role", referencedColumnName = "roleId"))
     private Set<Role> roles = new HashSet<>();
 
 	@Override

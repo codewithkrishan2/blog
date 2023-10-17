@@ -11,4 +11,8 @@ public class CommentsDto {
 	
 	private String content;
 	
+	private String username;
+	
+	
+	
 }

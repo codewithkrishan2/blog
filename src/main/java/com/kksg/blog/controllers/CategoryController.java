@@ -21,7 +21,7 @@ import com.kksg.blog.services.CategoryService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/category/")
+@RequestMapping("/api/v1/categories")
 public class CategoryController {
 	
 	@Autowired
@@ -65,7 +65,7 @@ public class CategoryController {
     	return new ResponseEntity<CategoryDto>(categoryById, HttpStatus.OK);
     }
     
-    @GetMapping("/allCategory")
+    @GetMapping("/all-categories")
     public ResponseEntity<?> getAllCategories(){
     	List<CategoryDto> allCategory = this.categoryService.getAllCategory();
     	return new ResponseEntity<List<CategoryDto>>(allCategory, HttpStatus.OK);

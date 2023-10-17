@@ -29,7 +29,7 @@ public class PostDto {
 	
 	private Date postAddedDate;
 	
-	@NotBlank(message = "Post Title is mandatory")
+	//@NotBlank(message = "Post Category is mandatory")
 	private CategoryDto postCategory;
 	
 	private UserDto user;

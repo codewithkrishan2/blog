@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class PostController {
 
 	@Autowired
@@ -45,6 +46,9 @@ public class PostController {
 	@Value("${project.image}")
 	private String path;
 	
+	
+	//Create Post By User Id And Category Id
+	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/user/{userId}/category/{categoryId}/createPost")
 	public ResponseEntity<PostDto> createPost(
 			@RequestBody PostDto postDto, 
@@ -55,7 +59,6 @@ public class PostController {
 	}
 	
 	//Get Posts By User
-	
 	@GetMapping("/user/{userId}/posts")
 	public ResponseEntity<List<PostDto>> getPostsByUser(@PathVariable Integer userId){
 		
@@ -65,8 +68,7 @@ public class PostController {
 	}
 	
 	//Get posts By Category
-	
-	@GetMapping("/category/{categoryId}/posts")
+	@GetMapping("/categories/{categoryId}/posts")
 	public ResponseEntity<List<PostDto>> getPostsByCategory(@PathVariable Integer categoryId){
 		
 		List<PostDto> postsByCategory = this.postService.getPostByCategory(categoryId);
@@ -86,7 +88,7 @@ public class PostController {
 	}
 	
 	//Get Post By Post Id
-	@GetMapping("/post/one/{postId}")
+	@GetMapping("/post/{postId}")
 	public ResponseEntity<PostDto> getPostById(@PathVariable Integer postId){
 		
 		 PostDto postById = this.postService.getPostById(postId);
@@ -110,7 +112,6 @@ public class PostController {
 	}
 	
 	//Search post by Title containing
-	
 	@GetMapping("/posts/search/{keywords}")
 	public ResponseEntity<List<PostDto>> searchPostByTitle(@PathVariable String keywords) {
 		List<PostDto> postDtos = this.postService.searchPost(keywords);
@@ -119,7 +120,6 @@ public class PostController {
 	
 	
 	//Post image Upload
-	
 	@PostMapping("/post/image/upload/{postId}")
 	public ResponseEntity<PostDto> uploadPostImages(
 			@RequestParam("image") MultipartFile  image,
@@ -134,7 +134,6 @@ public class PostController {
 	}
 	
 	//Method to serve uploaded images:
-	
 	@GetMapping(value = "/post/image/{imageName}", produces = MediaType.IMAGE_JPEG_VALUE)
 	public void downloadImage(
 			@PathVariable String imageName,

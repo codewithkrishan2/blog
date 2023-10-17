@@ -29,10 +29,10 @@ public class Post {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer postId;
 	
-	@Column(length = 1000, nullable = false)
+	@Column(length = 5000, nullable = false)
 	private String postTitle;
 	
-	@Column(length = 10000)
+	@Column(length = 1000000000)
 	private String postContent;
 	
 	private String postImage;
@@ -48,7 +48,7 @@ public class Post {
 	@ManyToOne
 	private User user;
 	
-	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Comments> comments = new HashSet<>();
 	
 }

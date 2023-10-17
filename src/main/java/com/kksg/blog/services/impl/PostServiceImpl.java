@@ -59,9 +59,12 @@ public class PostServiceImpl implements PostService {
 	@Override
 	public PostDto updatePost(PostDto postDto, Integer postId) {
 		Post post = this.postRepo.findById(postId).orElseThrow(()-> new ResourceNotFoundException("Post ", "Post Id", postId));
+		Category category = categoryRepo.findById(postDto.getPostCategory().getCategoryId()).get();
+		
 		post.setPostTitle(postDto.getPostTitle());
 		post.setPostContent(postDto.getPostContent());
 		post.setPostImage(postDto.getPostImage());
+		post.setPostCategory(category);
 		Post updatedPost = this.postRepo.save(post);
 		return this.modelMapper.map(updatedPost, PostDto.class);
 	}
@@ -69,24 +72,14 @@ public class PostServiceImpl implements PostService {
 	@Override
 	public void deletePost(Integer postId) {
 		Post post = this.postRepo.findById(postId).orElseThrow(()-> new ResourceNotFoundException("Post ", "Post Id", postId));
+		System.out.println("________________________________________________________________");
+		post.getComments().clear();
 		this.postRepo.delete(post);
-		
 	}
 
 	@Override
 	public PostResponse getAllPost(Integer pageNumber, Integer pageSize, String sortBy, String sortDir) {
-		
-		/*
-		//we can use ternary operator of java instead of if-else block
-		//this is using if else
-		Sort sort = null;
-		if (sortDir.equalsIgnoreCase("asc")) {
-			sort=Sort.by(sortBy).ascending();
-		} else {
-			sort=Sort.by(sortBy).descending();
-		}
-		*/
-		
+			
 		//this is for sorting 
 		Sort sort = (sortDir.equalsIgnoreCase("asc"))?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
 		

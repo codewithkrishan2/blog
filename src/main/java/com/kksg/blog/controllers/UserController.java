@@ -22,7 +22,7 @@ import com.kksg.blog.services.UserService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/v1/user")
 public class UserController {
 
 	@Autowired
@@ -58,8 +58,9 @@ public class UserController {
 		this.userService.deleteUser(uid);
     	return new ResponseEntity<ApiResponse>( new ApiResponse("User Deleted", true) , HttpStatus.OK);
 	}
-    //get all Users
     
+    //get all Users
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<UserDto>> getAllUsers() {
     	List<UserDto> allUsers = this.userService.getAllUsers();
@@ -67,7 +68,7 @@ public class UserController {
 	}
     
     //get a single User by ID
-    @GetMapping("/one/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getOneUser(@PathVariable("userId") Integer uid) {
     	UserDto userById = this.userService.getUserById(uid);
 		return new ResponseEntity<>(userById, HttpStatus.OK);
