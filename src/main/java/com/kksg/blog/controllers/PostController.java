@@ -102,6 +102,8 @@ public class PostController {
 		return new ResponseEntity<String>("Successfully Delete", HttpStatus.OK);
 	}
 	
+	
+	//Update Post By Post Id
 	@PutMapping("/post/update/{postId}")
 	public ResponseEntity<PostDto> updatePostById(
 			@Valid @RequestBody PostDto postDto, 

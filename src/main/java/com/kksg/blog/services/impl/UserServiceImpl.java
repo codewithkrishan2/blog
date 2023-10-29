@@ -75,6 +75,7 @@ public class UserServiceImpl implements UserService {
 		return userDtos;
 	}
 
+	//Delete use by user id
 	@Override
 	public void deleteUser(Integer userId) {
 		User user = this.userRepo.findById(userId).orElseThrow(
