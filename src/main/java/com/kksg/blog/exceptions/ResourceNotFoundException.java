@@ -20,7 +20,7 @@ public class ResourceNotFoundException extends RuntimeException{
 	//Create a constructor that takes in a String resourceName, String fieldsName and long fieldValue
 	public ResourceNotFoundException(String resourceName, String fieldsName, long fieldValue) {
 		//Call the superclass constructor with a message that includes the resourceName, fieldsName and fieldValue
-		super(String.format("%s not found with %s : %s", resourceName,fieldsName,fieldValue));
+		super("%s not found with %s : %s".formatted(resourceName, fieldsName, fieldValue));
 		
 		//Set the instance variables resourceName, fieldsName and fieldValue
 		this.resourceName = resourceName;

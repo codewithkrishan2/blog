@@ -1,6 +1,5 @@
 package com.kksg.blog.config;
 
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import com.kksg.blog.security.CustomUserDetailService;
@@ -51,7 +51,7 @@ public class SecurityConfig {
     };
 	
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
         
         http	
@@ -80,19 +80,19 @@ public class SecurityConfig {
 	}
 	
 	@Bean
-	public PasswordEncoder passwordEncoder() {
+	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 	
 	@Bean
-	public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration configuration) throws Exception {
+	AuthenticationManager authenticationManagerBean(AuthenticationConfiguration configuration) throws Exception {
 		
 		return configuration.getAuthenticationManager();
 		
 	}	
 	
 	@Bean
-	public DaoAuthenticationProvider daoAuthenticationProvider() {
+	DaoAuthenticationProvider daoAuthenticationProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(this.customUserDetailService);
 		provider.setPasswordEncoder(passwordEncoder());
@@ -100,7 +100,7 @@ public class SecurityConfig {
 	}
 	
 	@Bean
-    public FilterRegistrationBean coresFilter() {
+    FilterRegistrationBean<CorsFilter> coresFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         CorsConfiguration corsConfiguration = new CorsConfiguration();
@@ -118,7 +118,7 @@ public class SecurityConfig {
 
         source.registerCorsConfiguration("/**", corsConfiguration);
 
-        FilterRegistrationBean bean = new FilterRegistrationBean(new CorsFilter(source));
+        FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<CorsFilter>(new CorsFilter(source));
 
         bean.setOrder(-110);
 

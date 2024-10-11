@@ -78,10 +78,10 @@ public class PostController {
 	//Get All Posts
 	@GetMapping("/posts/all")
 	public ResponseEntity<PostResponse> getAllPost(
-			@RequestParam(value = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
-			@RequestParam(value = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
-			@RequestParam(value = "sortBy", defaultValue = AppConstants.SORT_BY, required = false) String sortBy,
-			@RequestParam(value = "sortDir", defaultValue = AppConstants.SORT_DIR, required = false) String sortDir){
+			@RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+			@RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+			@RequestParam(defaultValue = AppConstants.SORT_BY, required = false) String sortBy,
+			@RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir){
 		
 		PostResponse postResponse = this.postService.getAllPost(pageNumber,pageSize,sortBy,sortDir);
 		return new ResponseEntity<PostResponse>(postResponse, HttpStatus.OK);
@@ -122,7 +122,7 @@ public class PostController {
 	//Post image Upload
 	@PostMapping("/post/image/upload/{postId}")
 	public ResponseEntity<PostDto> uploadPostImages(
-			@RequestParam("image") MultipartFile  image,
+			@RequestParam MultipartFile  image,
 			@PathVariable Integer postId ) throws IOException{
 		
 		PostDto postById = this.postService.getPostById(postId);
