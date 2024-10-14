@@ -24,6 +24,7 @@ import com.kksg.blog.payloads.JwtAuthResponse;
 import com.kksg.blog.payloads.UserDto;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.security.JwtTokenHelper;
+import com.kksg.blog.services.EmailService;
 import com.kksg.blog.services.UserService;
 
 @RestController
@@ -46,12 +47,18 @@ public class AuthContoller {
 	private UserRepo userRepo;
 	@Autowired
 	private ModelMapper mapper;
+	
+	@Autowired
+	private EmailService emailService;
 
 	@PostMapping("/login")
 	public ResponseEntity<JwtAuthResponse> createToken(@RequestBody JwtAuthRequest request) throws Exception {
 
 		this.authenticate(request.getUsername(), request.getPassword());
 		UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.getUsername());
+		
+		
+		
 		String generatedToken = this.jwtTokenHelper.generateToken(userDetails);
 		
 		JwtAuthResponse response = new JwtAuthResponse();

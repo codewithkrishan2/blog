@@ -1,5 +1,6 @@
 package com.kksg.blog.entities;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -46,6 +47,10 @@ public class User implements UserDetails {
     private String email;
     
     private String password;
+    
+    private String otp; // To store the OTP
+    
+    private LocalDateTime otpExpiration; // To store OTP expiration time
     
     private String about;
     //private String role;
