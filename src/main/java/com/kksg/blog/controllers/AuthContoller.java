@@ -1,6 +1,7 @@
 package com.kksg.blog.controllers;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kksg.blog.entities.User;
 import com.kksg.blog.exceptions.ApiException;
+import com.kksg.blog.payloads.ApiResponse;
 import com.kksg.blog.payloads.JwtAuthRequest;
 import com.kksg.blog.payloads.JwtAuthResponse;
+import com.kksg.blog.payloads.OtpRequest;
 import com.kksg.blog.payloads.UserDto;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.security.JwtTokenHelper;
@@ -52,20 +55,80 @@ public class AuthContoller {
 	private EmailService emailService;
 
 	@PostMapping("/login")
-	public ResponseEntity<JwtAuthResponse> createToken(@RequestBody JwtAuthRequest request) throws Exception {
+	public ResponseEntity<ApiResponse> createToken(@RequestBody JwtAuthRequest request) throws Exception {
 
-		this.authenticate(request.getUsername(), request.getPassword());
-		UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.getUsername());
+		try {
+			User user = this.userRepo.findByEmail(request.getUsername()).orElseThrow(() -> new ApiException("User not found"));
+			this.authenticate(request.getUsername(), request.getPassword());
+			//UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.getUsername());
+			
+			
+			
+			// Generate OTP and set expiration
+		    int otp = this.emailService.generateOtp();
+		    System.out.println(otp);
+		    user.setOtp(otp);
+		    user.setOtpExpiration(LocalDateTime.now().plusMinutes(5)); // Set OTP expiration to 5 minutes
+
+			
+		    // Save OTP and expiration to the database
+		    userRepo.save(user);
+
+		    // Send OTP to user's email
+		    this.emailService.sendOtpEmail(user.getEmail(), otp);
+		    
+		    // Inform the user that OTP has been sent
+		    return new ResponseEntity<ApiResponse>(new ApiResponse("OTP sent successfully", true), HttpStatus.OK);
+
+		} catch (Exception e) {
+			throw new ApiException("Invalid Username or password");
+		}
 		
-		
-		
-		String generatedToken = this.jwtTokenHelper.generateToken(userDetails);
-		
-		JwtAuthResponse response = new JwtAuthResponse();
-		response.setToken(generatedToken);
-		response.setUser(mapper.map((User) userDetails, UserDto.class));
-		return new ResponseEntity<JwtAuthResponse>(response, HttpStatus.OK);
+//		String generatedToken = this.jwtTokenHelper.generateToken(userDetails);
+//		
+//		JwtAuthResponse response = new JwtAuthResponse();
+//		response.setToken(generatedToken);
+//		response.setUser(mapper.map((User) userDetails, UserDto.class));
+//		return new ResponseEntity<JwtAuthResponse>(response, HttpStatus.OK);
 	}
+	
+	
+	@PostMapping("/verify-otp")
+	public ResponseEntity<JwtAuthResponse> verifyOtp(@RequestBody OtpRequest otpRequest) throws Exception {
+	    // Find the user by email
+	    User user = this.userRepo.findByEmail(otpRequest.getUsername()).orElseThrow(() -> new ApiException("User not found"));
+
+	    // Check if the OTP is valid
+	    if (user.getOtp() != otpRequest.getOtp()) {
+	        throw new ApiException("Invalid OTP");
+	    }
+
+	    // Check if the OTP has expired
+	    if (user.getOtpExpiration().isBefore(LocalDateTime.now())) {
+	        throw new ApiException("OTP has expired");
+	    }
+
+	    // OTP is valid, proceed to generate JWT token
+	    UserDetails userDetails = this.userDetailsService.loadUserByUsername(otpRequest.getUsername());
+	    String token = this.jwtTokenHelper.generateToken(userDetails);
+
+	    // Clear OTP from user record (optional, for security)
+	    user.setOtp(0);
+	    user.setOtpExpiration(null);
+	    userRepo.save(user);
+
+	    // Create and return JWT response
+	    JwtAuthResponse response = new JwtAuthResponse();
+	    response.setToken(token);
+	    response.setUser(mapper.map(user, UserDto.class));
+	    
+	    return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
+	
+	
+	
+	
 
 	private void authenticate(String username, String password) throws Exception {
 
@@ -83,8 +146,13 @@ public class AuthContoller {
 
 	@PostMapping("/register")
 	public ResponseEntity<UserDto> registerNewUser(@RequestBody UserDto userDto) {
-		UserDto registeredUser = this.userService.registerNewUser(userDto);
-		return new ResponseEntity<UserDto>(registeredUser, HttpStatus.CREATED);
+		try {
+			UserDto registeredUser = this.userService.registerNewUser(userDto);
+			return new ResponseEntity<UserDto>(registeredUser, HttpStatus.CREATED);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<UserDto>(HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	// get loggedin user data

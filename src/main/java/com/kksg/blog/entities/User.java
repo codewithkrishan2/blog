@@ -48,7 +48,7 @@ public class User implements UserDetails {
     
     private String password;
     
-    private String otp; // To store the OTP
+    private int otp; // To store the OTP
     
     private LocalDateTime otpExpiration; // To store OTP expiration time
     
