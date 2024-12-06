@@ -1,4 +1,4 @@
-package com.kksg.blog.config;
+package com.kksg.blog.utils;
 
 public class AppConstants {
 

@@ -14,4 +14,6 @@ public interface UserService {
 	List<UserDto> getAllUsers();
 	void deleteUser(Integer userId);
 	//UserDto getUserByEmail(String email);
+
+	String getRoleOfLoggedInUser();
 }

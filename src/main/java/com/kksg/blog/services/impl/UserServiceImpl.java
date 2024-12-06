@@ -1,14 +1,17 @@
  package com.kksg.blog.services.impl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.kksg.blog.config.AppConstants;
 import com.kksg.blog.entities.Role;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
@@ -17,6 +20,7 @@ import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.RoleRepo;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.UserService;
+import com.kksg.blog.utils.AppConstants;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -132,6 +136,14 @@ public class UserServiceImpl implements UserService {
 		return userDtoSaved;
 	}
 
+
+	@Override
+	public String getRoleOfLoggedInUser() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+		List<String> roles = authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+		return roles.toString();
+	}
 
 
 }

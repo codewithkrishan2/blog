@@ -22,6 +22,7 @@ import com.kksg.blog.repositories.CategoryRepo;
 import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.PostService;
+import com.kksg.blog.utils.PaginationUtil;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -81,13 +82,15 @@ public class PostServiceImpl implements PostService {
 	public PostResponse getAllPost(Integer pageNumber, Integer pageSize, String sortBy, String sortDir) {
 			
 		//this is for sorting 
-		Sort sort = (sortDir.equalsIgnoreCase("asc"))?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
-		
-		Pageable p = PageRequest.of(pageNumber, pageSize, sort);
-		Page<Post> page = this.postRepo.findAll(p);
+//		Sort sort = (sortDir.equalsIgnoreCase("asc"))?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+//		Pageable p = PageRequest.of(pageNumber, pageSize, sort);
+		Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
+		Page<Post> page = this.postRepo.findAll(pageable);
 		List<Post> posts = page.getContent();
 		List<PostDto> postDtos = posts.stream().map((post)-> this.modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
 		PostResponse postResponse = new PostResponse();
+		
+		
 		
 		postResponse.setContent(postDtos);
 		postResponse.setPageNumber(page.getNumber());
@@ -134,9 +137,5 @@ public class PostServiceImpl implements PostService {
 		
 		return postDtos;
 	}
-
-
-
-
 
 }

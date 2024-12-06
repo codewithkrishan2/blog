@@ -12,9 +12,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.kksg.blog.entities.enums.UserStatus;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,9 +52,9 @@ public class User implements UserDetails {
     
     private String password;
     
-    private int otp; // To store the OTP
+    private int otp;
     
-    private LocalDateTime otpExpiration; // To store OTP expiration time
+    private LocalDateTime otpExpiration; 
     
     private String about;
     //private String role;
@@ -63,6 +67,9 @@ public class User implements UserDetails {
     			inverseJoinColumns = @JoinColumn(name = "role", referencedColumnName = "roleId"))
     private Set<Role> roles = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+    
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		List<SimpleGrantedAuthority> authorities = 
@@ -72,6 +79,8 @@ public class User implements UserDetails {
 		return authorities;
 	}
 
+	
+	
 	@Override
 	public String getUsername() {
 		

@@ -9,9 +9,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import com.kksg.blog.config.AppConstants;
 import com.kksg.blog.entities.Role;
 import com.kksg.blog.repositories.RoleRepo;
+import com.kksg.blog.utils.AppConstants;
 
 @SpringBootApplication
 public class BlogApiApplication implements CommandLineRunner {
