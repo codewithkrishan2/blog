@@ -1,5 +1,6 @@
 package com.kksg.blog.entities;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,11 +35,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class User implements UserDetails {
-	
+
     /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+     * 
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

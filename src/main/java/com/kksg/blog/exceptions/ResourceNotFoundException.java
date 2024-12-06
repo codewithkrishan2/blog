@@ -3,12 +3,15 @@ package com.kksg.blog.exceptions;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serial;
+
 //@SuppressWarnings("serial")
 @Setter
 @Getter
 public class ResourceNotFoundException extends RuntimeException{
-	
-	private static final long serialVersionUID = 1L;
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 	/**
 	 * 
 	 */

@@ -1,12 +1,15 @@
 package com.kksg.blog.exceptions;
 
+import java.io.Serial;
+
 public class ApiException extends RuntimeException {
 
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+
+    /**
+     * 
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	public ApiException() {
 		super();
