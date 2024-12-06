@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.kksg.blog.entities.Category;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
+import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
 import com.kksg.blog.payloads.PostDto;
 import com.kksg.blog.payloads.PostResponse;
@@ -49,6 +50,7 @@ public class PostServiceImpl implements PostService {
 		post.setPostAddedDate(new Date());
 		post.setUser(user);
 		post.setPostCategory(category);
+		post.setStatus(PostStatus.PENDING);
 		
 		Post newPost = this.postRepo.save(post);
 		

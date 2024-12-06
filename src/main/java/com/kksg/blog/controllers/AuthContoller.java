@@ -65,7 +65,8 @@ public class AuthContoller {
 			
 			
 			// Generate OTP and set expiration
-		    int otp = this.emailService.generateOtp();
+//		    int otp = this.emailService.generateOtp();
+			int otp = 123456;
 		    System.out.println(otp);
 		    user.setOtp(otp);
 		    user.setOtpExpiration(LocalDateTime.now().plusMinutes(5)); // Set OTP expiration to 5 minutes

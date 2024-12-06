@@ -42,7 +42,6 @@ public class PostController {
 	private FileService fileService;
 
 	// Getting path of the imagesFile
-
 	@Value("${project.image}")
 	private String path;
 

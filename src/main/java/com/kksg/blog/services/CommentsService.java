@@ -4,7 +4,7 @@ import com.kksg.blog.payloads.CommentsDto;
 
 public interface CommentsService {
 
-	CommentsDto createComment(CommentsDto commentsDto, Integer postId);
+	CommentsDto createComment(CommentsDto commentsDto);
 	void deleteComment(Integer commentId);
 	
 }

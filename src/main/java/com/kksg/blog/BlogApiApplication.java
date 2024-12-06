@@ -44,7 +44,16 @@ public class BlogApiApplication implements CommandLineRunner {
 			role2.setRoleId(AppConstants.NORLMAL_USER);
 			role2.setName("ROLE_NORMAL");
 
-			List<Role> roles = List.of(role1, role2);
+			Role role3 = new Role();
+			role3.setRoleId(AppConstants.ROLE_MODERATOR);
+			role3.setName("ROLE_MODERATOR");
+			
+			Role role4 = new Role();
+			role4.setRoleId(AppConstants.ROLE_AUTHOR);
+			role4.setName("ROLE_AUTHOR");
+			
+			
+			List<Role> roles = List.of(role1, role2, role3, role4);
 			List<Role> savedRoles = this.roleRepo.saveAll(roles);
 			savedRoles.forEach(r -> {
 				System.out.println(r.getName());
