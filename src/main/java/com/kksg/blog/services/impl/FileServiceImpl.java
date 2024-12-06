@@ -26,6 +26,11 @@ public class FileServiceImpl implements FileService {
 		
 		String name = file.getOriginalFilename();
 		
+		// Check if the file name is null or empty
+		if (name == null || name.isEmpty()) {
+			throw new IllegalArgumentException("The file name is invalid.");
+		}
+
 		//STEP-2: Random Name Generated fileName using RandomGenerator
 		String randomId = UUID.randomUUID().toString();
 		
