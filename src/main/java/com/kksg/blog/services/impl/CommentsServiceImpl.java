@@ -1,17 +1,20 @@
 package com.kksg.blog.services.impl;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.entities.Comments;
+import com.kksg.blog.entities.Like;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
 import com.kksg.blog.payloads.CommentsDto;
 import com.kksg.blog.repositories.CommentsRepo;
+import com.kksg.blog.repositories.LikeRepository;
 import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.CommentsService;
@@ -30,6 +33,9 @@ public class CommentsServiceImpl implements CommentsService {
 	
 	@Autowired
 	private UserRepo userRepo;
+	
+	@Autowired
+	private LikeRepository likeRepo;
 	
 	@Override
 	public CommentsDto createComment(CommentsDto commentsDto) {
@@ -50,4 +56,37 @@ public class CommentsServiceImpl implements CommentsService {
 		this.commentsRepo.delete(comment);
 	}
 
+	@Override
+	public void toggleLikeComment(Integer commentId, Integer userId) {
+	    // Fetch the comment and user from the repository
+	    Comments comment = commentsRepo.findById(commentId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
+	    User user = userRepo.findById(userId)
+	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
+
+	    // Check if the user has already liked the comment
+	    Optional<Like> existingLike = likeRepo.findByCommentAndUser(comment, user);
+
+	    if (existingLike.isPresent()) {
+	        // If the like exists, remove the like (unlike)
+	        likeRepo.delete(existingLike.get());
+	    } else {
+	        // If the like does not exist, create a new like (like the comment)
+	        Like newLike = new Like();
+	        newLike.setComment(comment);
+	        newLike.setUser(user);
+	        newLike.setLikeDate(LocalDateTime.now());
+
+	        // Save the new like to the repository
+	        likeRepo.save(newLike);
+	    }
+	}
+
+	@Override
+	public long getCommentLikeCount(Integer commentId) {
+	    Comments comment = commentsRepo.findById(commentId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
+	    return likeRepo.countByComment(comment);  // Return the like count for the comment
+	}
+	
 }

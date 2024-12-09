@@ -133,4 +133,18 @@ public class PostController {
 		response.setContentType(MediaType.IMAGE_JPEG_VALUE);
 		StreamUtils.copy(resource, response.getOutputStream());
 	}
+	
+	// Like a post
+    @PostMapping("/post/{postId}/like")
+    public ResponseEntity<Void> likePost(@PathVariable Integer postId, @RequestParam Integer userId) {
+        postService.toggleLikePost(postId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+    
+    //get like count
+	@GetMapping("/post/{postId}/like-count")
+	public ResponseEntity<Long> getPostLikeCount(@PathVariable Integer postId) {
+		long likeCount = postService.getPostLikeCount(postId);
+		return ResponseEntity.ok(likeCount);  // Return 200 OK with the like count
+	}
 }

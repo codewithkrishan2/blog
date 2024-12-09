@@ -42,9 +42,7 @@ public class Post {
 	private String postImage;
 	
 	private Date postAddedDate;
-	
-	//private boolean isPostLive;
-	
+		
 	@ManyToOne
 	@JoinColumn(name = "category_id")
 	private Category postCategory;
@@ -58,4 +56,13 @@ public class Post {
 	@Enumerated(EnumType.STRING)
 	private PostStatus status;
 	
+	// SEO Fields
+    private String metaTitle;
+    private String metaDescription;
+    private String metaKeywords;
+    private String slug;  // Custom URL Slug
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Like> likes = new HashSet<>();  // A collection of likes for this post
+
 }

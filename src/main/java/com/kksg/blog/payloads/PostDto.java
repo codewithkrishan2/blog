@@ -35,5 +35,13 @@ public class PostDto {
 	private UserDto user;
 	
 	private Set<CommentsDto> comments = new HashSet<>();
-		
+	
+	// SEO Fields
+    private String metaTitle;
+    private String metaDescription;
+    private String metaKeywords;
+    private String slug;
+    
+    private Integer likeCount; 
+	
 }

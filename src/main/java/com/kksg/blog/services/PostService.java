@@ -31,4 +31,8 @@ public interface PostService {
 	//Get All post by Keywords
 	List<PostDto> searchPost(String keyword);
 
+	void toggleLikePost(Integer postId, Integer userId);
+
+	long getPostLikeCount(Integer postId);
+
 }
