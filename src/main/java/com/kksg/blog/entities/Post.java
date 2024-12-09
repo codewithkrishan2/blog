@@ -62,7 +62,13 @@ public class Post {
     private String metaKeywords;
     private String slug;  // Custom URL Slug
     
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Like> likes = new HashSet<>();  // A collection of likes for this post
+    @Column(nullable = false)
+    private long likeCount = 0;
+
+    @Column(nullable = false)
+    private long viewCount = 0;
+    
+//    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private Set<Likes> likes = new HashSet<>();  // A collection of likes for this post
 
 }

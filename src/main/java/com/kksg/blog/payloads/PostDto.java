@@ -22,26 +22,19 @@ public class PostDto {
 	@NotBlank(message = "Post Title is mandatory")
 	@Size(min = 6, message = "Post Title must be min - 6 characters")
 	private String postTitle;
-	
 	private String postContent;
-	
 	private String postImage;
-	
 	private Date postAddedDate;
-	
-	//@NotBlank(message = "Post Category is mandatory")
 	private CategoryDto postCategory;
-	
 	private UserDto user;
-	
 	private Set<CommentsDto> comments = new HashSet<>();
-	
 	// SEO Fields
     private String metaTitle;
     private String metaDescription;
     private String metaKeywords;
     private String slug;
     
-    private Integer likeCount; 
+    private long viewCount; 
+    private long likeCount;
 	
 }

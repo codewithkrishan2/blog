@@ -13,15 +13,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.entities.Category;
-import com.kksg.blog.entities.Like;
+import com.kksg.blog.entities.Likes;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
+import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
 import com.kksg.blog.payloads.PostListDto;
 import com.kksg.blog.payloads.PostResponse;
+import com.kksg.blog.payloads.UserAnalyticsDto;
 import com.kksg.blog.repositories.CategoryRepo;
+import com.kksg.blog.repositories.CommentsRepo;
 import com.kksg.blog.repositories.LikeRepository;
 import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.UserRepo;
@@ -47,6 +50,9 @@ public class PostServiceImpl implements PostService {
 	@Autowired
 	private LikeRepository likeRepo;
 
+	@Autowired
+	private CommentsRepo commentsRepo;
+	
 	@Override
 	public PostDto createPost(PostDto postDto, Integer userId, Integer categoryId) {
 
@@ -62,16 +68,10 @@ public class PostServiceImpl implements PostService {
 			post.setMetaTitle(post.getPostTitle()); // Use the title as the meta title by default
 		}
 		if (post.getMetaDescription() == null || post.getMetaDescription().isEmpty()) {
-			post.setMetaDescription(post.getPostContent().substring(0, Math.min(150, post.getPostContent().length()))); // Use
-																														// a
-																														// snippet
-																														// from
-																														// the
-																														// content
+			post.setMetaDescription(post.getPostContent().substring(0, Math.min(150, post.getPostContent().length()))); 
 		}
 		if (post.getMetaKeywords() == null || post.getMetaKeywords().isEmpty()) {
 			post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent())); // Optionally generate keywords from
-																					// content
 		}
 
 		// Generate a slug from the post title
@@ -105,29 +105,32 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public void toggleLikePost(Integer postId, Integer userId) {
-		// Fetch the post and user from the repository
-		Post post = postRepo.findById(postId)
-				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
-		User user = userRepo.findById(userId)
-				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
+	    // Fetch the post and user from the repository
+	    Post post = postRepo.findById(postId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
+	    User user = userRepo.findById(userId)
+	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
 
-		// Check if the user has already liked the post
-		Optional<Like> existingLike = likeRepo.findByPostAndUser(post, user);
+	    // Check if the user has already liked the post
+	    Optional<Likes> existingLike = likeRepo.findByPostAndUser(post, user);
 
-		if (existingLike.isPresent()) {
-			// If the like exists, remove the like (unlike)
-			likeRepo.delete(existingLike.get());
-		} else {
-			// If the like does not exist, create a new like (like the post)
-			Like newLike = new Like();
-			newLike.setPost(post);
-			newLike.setUser(user);
-			newLike.setLikeDate(LocalDateTime.now());
-
-			// Save the new like to the repository
-			likeRepo.save(newLike);
-		}
+	    if (existingLike.isPresent()) {
+	        // If the like exists, remove the like (unlike)
+	        likeRepo.delete(existingLike.get());	        
+	        // Decrement the like count in the Post entity
+	        post.setLikeCount(post.getLikeCount() - 1);
+	    } else {
+	        // If the like does not exist, create a new like (like the post)
+	        Likes newLike = new Likes();
+	        newLike.setPost(post);
+	        newLike.setUser(user);
+	        newLike.setLikeDate(LocalDateTime.now());
+	        likeRepo.save(newLike);
+	        post.setLikeCount(post.getLikeCount() + 1);
+	    }
+	    postRepo.save(post);
 	}
+
 
 	@Override
 	public long getPostLikeCount(Integer postId) {
@@ -194,14 +197,17 @@ public class PostServiceImpl implements PostService {
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
 		PostDto postDto = modelMapper.map(post, PostDto.class);
-
-		// Manually count the likes for this post
-	    Integer likeCount = likeRepo.countByPost(post);
-	    // Set the likeCount in the PostDto
-	    postDto.setLikeCount(likeCount);
-	    
+		//increment post view count
+		incrementViewCount(post);
 		return postDto;
 	}
+	
+	@Override
+	public void incrementViewCount(Post post) {
+	    post.setViewCount(post.getViewCount() + 1);
+	    postRepo.save(post);
+	}
+
 
 	@Override
 	public List<PostDto> getPostByCategory(Integer categoryId) {
@@ -231,5 +237,73 @@ public class PostServiceImpl implements PostService {
 
 		return postDtos;
 	}
+	
+	@Override
+	public PostAnalyticsDto getPostAnalytics(Integer postId) {
+	    Post post = postRepo.findById(postId)
+	            .orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
+
+	    Long likeCount = post.getLikeCount();
+	    Long commentCount = commentsRepo.countByPost(post);
+
+	    // Get View Count (directly from Post entity)
+	    Long viewCount = post.getViewCount();
+
+	    // Create the PostAnalyticsDto and populate it with the data
+	    PostAnalyticsDto analyticsDto = new PostAnalyticsDto();
+	    analyticsDto.setPostId(postId);
+	    analyticsDto.setLikeCount(likeCount);
+	    analyticsDto.setCommentCount(commentCount);
+	    analyticsDto.setViewCount(viewCount);
+
+	    return analyticsDto;
+	}
+
+	@Override
+	public UserAnalyticsDto getUserAnalytics(Integer userId) {
+	    // Fetch the user by ID
+	    User user = userRepo.findById(userId)
+	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
+
+	    // Count the total number of posts made by the user
+	    Long postCount = postRepo.countByUser(user);
+
+	    // Count the total number of likes the user has received on their posts
+	    Long likeCount = likeRepo.countByUser(user);
+
+	    // Count the total number of comments made by the user
+	    Long commentCount = commentsRepo.countByUser(user);
+
+	    // Create the UserAnalyticsDto and populate it with the data
+	    UserAnalyticsDto analyticsDto = new UserAnalyticsDto();
+	    analyticsDto.setUserId(userId);
+	    analyticsDto.setPostCount(postCount);
+	    analyticsDto.setLikeCount(likeCount);
+	    analyticsDto.setCommentCount(commentCount);
+
+	    return analyticsDto;
+	}
+
+	@Override
+	public List<PostListDto> getTrendingPosts() {
+	    // Define a time range (e.g., last 7 days)
+	    LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+
+	    // Fetch posts with the highest like or view counts in the last 7 days
+	    List<Post> topTrendingPosts = postRepo.findTopTrendingPosts(sevenDaysAgo);
+
+	    // Map the posts to PostListDto
+	    List<PostListDto> postDtos = topTrendingPosts.stream().map((post) -> {
+	        PostListDto postListDto = this.modelMapper.map(post, PostListDto.class);
+	        postListDto.setUserName(post.getUser().getName());
+	        postListDto.setCommentsCount(post.getComments().size());
+	        Long likeCount = post.getLikeCount();  // Using aggregated data
+	        postListDto.setLikeCount(likeCount);
+	        return postListDto;
+	    }).collect(Collectors.toList());
+
+	    return postDtos;
+	}
+
 
 }

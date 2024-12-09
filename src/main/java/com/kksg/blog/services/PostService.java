@@ -2,8 +2,12 @@ package com.kksg.blog.services;
 
 import java.util.List;
 
+import com.kksg.blog.entities.Post;
+import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
+import com.kksg.blog.payloads.PostListDto;
 import com.kksg.blog.payloads.PostResponse;
+import com.kksg.blog.payloads.UserAnalyticsDto;
 
 public interface PostService {
 
@@ -31,8 +35,17 @@ public interface PostService {
 	//Get All post by Keywords
 	List<PostDto> searchPost(String keyword);
 
+	void incrementViewCount(Post post);
+	
 	void toggleLikePost(Integer postId, Integer userId);
 
 	long getPostLikeCount(Integer postId);
+
+	PostAnalyticsDto getPostAnalytics(Integer postId);
+
+	UserAnalyticsDto getUserAnalytics(Integer userId);
+
+	List<PostListDto> getTrendingPosts();
+
 
 }

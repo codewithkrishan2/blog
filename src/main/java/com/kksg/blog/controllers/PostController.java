@@ -22,8 +22,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
+import com.kksg.blog.payloads.PostListDto;
 import com.kksg.blog.payloads.PostResponse;
+import com.kksg.blog.payloads.UserAnalyticsDto;
 import com.kksg.blog.services.FileService;
 import com.kksg.blog.services.PostService;
 import com.kksg.blog.utils.AppConstants;
@@ -133,18 +136,34 @@ public class PostController {
 		response.setContentType(MediaType.IMAGE_JPEG_VALUE);
 		StreamUtils.copy(resource, response.getOutputStream());
 	}
-	
+
 	// Like a post
-    @PostMapping("/post/{postId}/like")
-    public ResponseEntity<Void> likePost(@PathVariable Integer postId, @RequestParam Integer userId) {
-        postService.toggleLikePost(postId, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-    
-    //get like count
+	@PostMapping("/post/{postId}/like")
+	public ResponseEntity<Void> likePost(@PathVariable Integer postId, @RequestParam Integer userId) {
+		postService.toggleLikePost(postId, userId);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
+
+	// get like count
 	@GetMapping("/post/{postId}/like-count")
 	public ResponseEntity<Long> getPostLikeCount(@PathVariable Integer postId) {
 		long likeCount = postService.getPostLikeCount(postId);
-		return ResponseEntity.ok(likeCount);  // Return 200 OK with the like count
+		return ResponseEntity.ok(likeCount); // Return 200 OK with the like count
 	}
+
+	@GetMapping("/post/{postId}/analytics")
+	public PostAnalyticsDto getPostAnalytics(@PathVariable Integer postId) {
+		return postService.getPostAnalytics(postId);
+	}
+
+	@GetMapping("/user/{userId}/analytics")
+	public UserAnalyticsDto getUserAnalytics(@PathVariable Integer userId) {
+		return postService.getUserAnalytics(userId);
+	}
+
+	@GetMapping("/post/trending")
+	public List<PostListDto> getTrendingPosts() {
+		return postService.getTrendingPosts();
+	}
+
 }

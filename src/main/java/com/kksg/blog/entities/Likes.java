@@ -12,12 +12,12 @@ import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 @Data
-@Entity(name="user_likes")
-public class Like {
+@Entity
+public class Likes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer likeId;
+    private Long likeId;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

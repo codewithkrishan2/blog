@@ -1,16 +1,13 @@
 package com.kksg.blog.entities;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,9 +35,13 @@ public class Comments {
 	
 	private LocalDateTime createdAt;
 	
-	@OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<Like> likes = new HashSet<>();  // A collection of likes for this comment
+    @Column(nullable = false)
+    private long likeCount = 0;
 
+    
+//	@OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+//	private Set<Likes> likes = new HashSet<>();  // A collection of likes for this comment
+	
 	
 	@PrePersist
     public void onPrePersist() {

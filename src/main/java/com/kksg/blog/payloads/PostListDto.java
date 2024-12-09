@@ -17,6 +17,7 @@ public class PostListDto {
 	private String metaDescription;
 	private String metaKeywords;
 	private String slug;
-	private Integer likeCount;
+    private long viewCount; 
+    private long likeCount;
 
 }

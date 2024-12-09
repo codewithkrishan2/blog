@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.entities.Comments;
-import com.kksg.blog.entities.Like;
+import com.kksg.blog.entities.Likes;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
@@ -65,14 +65,14 @@ public class CommentsServiceImpl implements CommentsService {
 	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
 
 	    // Check if the user has already liked the comment
-	    Optional<Like> existingLike = likeRepo.findByCommentAndUser(comment, user);
+	    Optional<Likes> existingLike = likeRepo.findByCommentAndUser(comment, user);
 
 	    if (existingLike.isPresent()) {
 	        // If the like exists, remove the like (unlike)
 	        likeRepo.delete(existingLike.get());
 	    } else {
 	        // If the like does not exist, create a new like (like the comment)
-	        Like newLike = new Like();
+	        Likes newLike = new Likes();
 	        newLike.setComment(comment);
 	        newLike.setUser(user);
 	        newLike.setLikeDate(LocalDateTime.now());
