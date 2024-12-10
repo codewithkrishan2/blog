@@ -13,27 +13,44 @@ import com.kksg.blog.payloads.CategoryDto;
 import com.kksg.blog.repositories.CategoryRepo;
 import com.kksg.blog.services.CategoryService;
 
-
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
 	@Autowired
 	private CategoryRepo categoryRepo;
-	
+
 	@Autowired
 	private ModelMapper modelMapper;
-	
+
 	@Override
 	public CategoryDto createCategory(CategoryDto categoryDto) {
+
+		Category parentCategory = null;
+		if (categoryDto.getParentCategoryId() != null) {
+			parentCategory = categoryRepo.findById(categoryDto.getParentCategoryId())
+					.orElseThrow(() -> new ResourceNotFoundException("Category", "Parent Category Id",
+							categoryDto.getParentCategoryId()));
+		}
+
 		Category category = modelMapper.map(categoryDto, Category.class);
+		category.setParentCategory(parentCategory);
 		Category savedCategory = this.categoryRepo.save(category);
-		
+
 		return this.modelMapper.map(savedCategory, CategoryDto.class);
 	}
 
 	@Override
 	public CategoryDto updateCategory(CategoryDto categoryDto, Integer categoryId) {
-		Category category = this.categoryRepo.findById(categoryId).orElseThrow(()-> new ResourceNotFoundException("Category", "Category Id ", categoryId));
+		Category category = this.categoryRepo.findById(categoryId)
+				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
+
+		if (categoryDto.getParentCategoryId() != null) {
+			Category parentCategory = categoryRepo.findById(categoryDto.getParentCategoryId())
+					.orElseThrow(() -> new ResourceNotFoundException("Category", "Parent Category Id",
+							categoryDto.getParentCategoryId()));
+			category.setParentCategory(parentCategory);
+		}
+
 		category.setCategoryTitle(categoryDto.getCategoryTitle());
 		category.setCategoryDescription(categoryDto.getCategoryDescription());
 		Category updatedCategory = this.categoryRepo.save(category);
@@ -43,26 +60,34 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public void deleteCategory(Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
-								.orElseThrow(
-										()-> new ResourceNotFoundException(
-												"Category ", 
-												"Category Id",
-												categoryId));
+				.orElseThrow(() -> new ResourceNotFoundException("Category ", "Category Id", categoryId));
 		this.categoryRepo.delete(category);
-		
+
 	}
 
 	@Override
 	public CategoryDto getCategoryById(Integer categoryId) {
-		Category category = this.categoryRepo.findById(categoryId).orElseThrow(()-> new ResourceNotFoundException("Category", "Category Id ", categoryId));
-		return this.modelMapper.map(category, CategoryDto.class);
+		Category category = this.categoryRepo.findById(categoryId)
+				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
+//		return this.modelMapper.map(category, CategoryDto.class);
+		// Include subcategories in the response
+		CategoryDto categoryDto = modelMapper.map(category, CategoryDto.class);
+		categoryDto.setSubCategories(category.getSubCategories().stream()
+				.map(subCategory -> modelMapper.map(subCategory, CategoryDto.class)).collect(Collectors.toList()));
+		return categoryDto;
 	}
 
 	@Override
 	public List<CategoryDto> getAllCategory() {
-		List<Category> allCategory = this.categoryRepo.findAll();
-		List<CategoryDto> categoryDtos = allCategory.stream().map((cat)-> this.modelMapper.map(cat, CategoryDto.class)).collect(Collectors.toList());
-		return categoryDtos;
+		List<Category> allCategories = this.categoryRepo.findAll();
+//		List<CategoryDto> categoryDtos = allCategory.stream().map((cat) -> this.modelMapper.map(cat, CategoryDto.class))
+//				.collect(Collectors.toList());
+//		return categoryDtos;
+		return allCategories.stream().map(category -> {
+			CategoryDto categoryDto = modelMapper.map(category, CategoryDto.class);
+			categoryDto.setSubCategories(category.getSubCategories().stream()
+					.map(subCategory -> modelMapper.map(subCategory, CategoryDto.class)).collect(Collectors.toList()));
+			return categoryDto;
+		}).collect(Collectors.toList());
 	}
-
 }
