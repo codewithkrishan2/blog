@@ -8,4 +8,5 @@ public interface CommentsService {
 	void deleteComment(Integer commentId);
 	void toggleLikeComment(Integer commentId, Integer userId);
 	long getCommentLikeCount(Integer commentId);
+	CommentsDto replyToComment(Integer parentCommentId, CommentsDto commentsDto);
 }

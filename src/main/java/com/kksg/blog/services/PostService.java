@@ -3,6 +3,7 @@ package com.kksg.blog.services;
 import java.util.List;
 
 import com.kksg.blog.entities.Post;
+import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
 import com.kksg.blog.payloads.PostListDto;
@@ -47,5 +48,6 @@ public interface PostService {
 
 	List<PostListDto> getTrendingPosts();
 
+	PostDto updatePostStatus(Integer postId, PostStatus newStatus);
 
 }

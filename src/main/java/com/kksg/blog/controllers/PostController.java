@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
 import com.kksg.blog.payloads.PostListDto;
@@ -54,7 +55,15 @@ public class PostController {
 	public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto, @PathVariable Integer userId,
 			@PathVariable Integer categoryId) {
 		PostDto createdPost = this.postService.createPost(postDto, userId, categoryId);
-		return new ResponseEntity<PostDto>(createdPost, HttpStatus.CREATED);
+		return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
+	}
+	
+	//Api for changing the post status
+	@PreAuthorize("hasRole('ADMIN')")
+	@PutMapping("/post/{postId}/status")
+	public ResponseEntity<PostDto> updatePostStatus(@PathVariable Integer postId, @RequestParam PostStatus newStatus) {
+		PostDto updatedPost = this.postService.updatePostStatus(postId, newStatus);
+		return new ResponseEntity<>(updatedPost, HttpStatus.OK);
 	}
 
 	// Get Posts By User
@@ -164,6 +173,6 @@ public class PostController {
 	@GetMapping("/post/trending")
 	public List<PostListDto> getTrendingPosts() {
 		return postService.getTrendingPosts();
-	}
+	}	
 
 }

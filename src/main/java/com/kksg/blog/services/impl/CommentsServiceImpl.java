@@ -18,75 +18,108 @@ import com.kksg.blog.repositories.LikeRepository;
 import com.kksg.blog.repositories.PostRepo;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.CommentsService;
+import com.kksg.blog.utils.ContentSanitizer;
 
 @Service
 public class CommentsServiceImpl implements CommentsService {
 
 	@Autowired
 	private PostRepo postRepo;
-	
+
 	@Autowired
 	private CommentsRepo commentsRepo;
-	
+
 	@Autowired
 	private ModelMapper modelMapper;
-	
+
 	@Autowired
 	private UserRepo userRepo;
-	
+
 	@Autowired
 	private LikeRepository likeRepo;
-	
+
+	@Autowired
+	private ContentSanitizer contentSanitizer;
+
 	@Override
 	public CommentsDto createComment(CommentsDto commentsDto) {
+		
+		String sanitizedContent = contentSanitizer.sanitizeContent(commentsDto.getContent());
+		
 		Integer postId = commentsDto.getPostId();
-		Post post = this.postRepo.findById(postId).orElseThrow(()-> new ResourceNotFoundException("Post", "Post Id ", postId));
-		User user = userRepo.findById(commentsDto.getUserId()).orElseThrow(()-> new ResourceNotFoundException("User", "User Id ", commentsDto.getUserId()));
+		Post post = this.postRepo.findById(postId)
+				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id ", postId));
+		User user = userRepo.findById(commentsDto.getUserId())
+				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id ", commentsDto.getUserId()));
 		Comments comment = this.modelMapper.map(commentsDto, Comments.class);
+		comment.setContent(sanitizedContent);
 		comment.setPost(post);
 		comment.setUser(user);
 		comment.setUsername(user.getName());
 		comment.setCreatedAt(LocalDateTime.now());
-		return this.modelMapper.map(this.commentsRepo.save(comment), CommentsDto.class);	
+		return this.modelMapper.map(this.commentsRepo.save(comment), CommentsDto.class);
+	}
+
+	@Override
+	public CommentsDto replyToComment(Integer parentCommentId, CommentsDto commentsDto) {
+		// Fetch the Parent Comment, User, and Post
+		Comments parentComment = commentsRepo.findById(parentCommentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", parentCommentId));
+		User user = userRepo.findById(commentsDto.getUserId())
+				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id ", commentsDto.getUserId()));
+		Post post = parentComment.getPost(); // The post to which the comment belongs
+
+		// Create a new reply comment
+		Comments reply = new Comments();
+		reply.setContent(commentsDto.getContent());
+		reply.setPost(post);
+		reply.setUser(user);
+		reply.setUsername(user.getName());
+		reply.setParentComment(parentComment); // Set parent comment as the comment we are replying to
+		reply.setCreatedAt(LocalDateTime.now());
+		Comments savedReply = commentsRepo.save(reply);
+
+		return modelMapper.map(savedReply, CommentsDto.class);
 	}
 
 	@Override
 	public void deleteComment(Integer commentId) {
-		Comments comment = this.commentsRepo.findById(commentId).orElseThrow(()-> new ResourceNotFoundException("Comment", "Comment Id", commentId));
+		Comments comment = this.commentsRepo.findById(commentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
 		this.commentsRepo.delete(comment);
 	}
 
 	@Override
 	public void toggleLikeComment(Integer commentId, Integer userId) {
-	    // Fetch the comment and user from the repository
-	    Comments comment = commentsRepo.findById(commentId)
-	            .orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
-	    User user = userRepo.findById(userId)
-	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
+		// Fetch the comment and user from the repository
+		Comments comment = commentsRepo.findById(commentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
+		User user = userRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
 
-	    // Check if the user has already liked the comment
-	    Optional<Likes> existingLike = likeRepo.findByCommentAndUser(comment, user);
+		// Check if the user has already liked the comment
+		Optional<Likes> existingLike = likeRepo.findByCommentAndUser(comment, user);
 
-	    if (existingLike.isPresent()) {
-	        // If the like exists, remove the like (unlike)
-	        likeRepo.delete(existingLike.get());
-	    } else {
-	        // If the like does not exist, create a new like (like the comment)
-	        Likes newLike = new Likes();
-	        newLike.setComment(comment);
-	        newLike.setUser(user);
-	        newLike.setLikeDate(LocalDateTime.now());
+		if (existingLike.isPresent()) {
+			// If the like exists, remove the like (unlike)
+			likeRepo.delete(existingLike.get());
+		} else {
+			// If the like does not exist, create a new like (like the comment)
+			Likes newLike = new Likes();
+			newLike.setComment(comment);
+			newLike.setUser(user);
+			newLike.setLikeDate(LocalDateTime.now());
 
-	        // Save the new like to the repository
-	        likeRepo.save(newLike);
-	    }
+			// Save the new like to the repository
+			likeRepo.save(newLike);
+		}
 	}
 
 	@Override
 	public long getCommentLikeCount(Integer commentId) {
-	    Comments comment = commentsRepo.findById(commentId)
-	            .orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
-	    return likeRepo.countByComment(comment);  // Return the like count for the comment
+		Comments comment = commentsRepo.findById(commentId)
+				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
+		return likeRepo.countByComment(comment); // Return the like count for the comment
 	}
-	
+
 }
