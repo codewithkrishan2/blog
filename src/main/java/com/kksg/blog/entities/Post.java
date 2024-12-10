@@ -1,6 +1,6 @@
 package com.kksg.blog.entities;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +41,7 @@ public class Post {
 	
 	private String postImage;
 	
-	private Date postAddedDate;
+	private LocalDateTime postAddedDate;
 		
 	@ManyToOne
 	@JoinColumn(name = "category_id")

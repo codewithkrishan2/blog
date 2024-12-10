@@ -40,6 +40,18 @@ public class CommentsServiceImpl implements CommentsService {
 
 	@Autowired
 	private ContentSanitizer contentSanitizer;
+	
+
+	public CommentsServiceImpl(PostRepo postRepo, CommentsRepo commentsRepo, ModelMapper modelMapper, UserRepo userRepo,
+			LikeRepository likeRepo, ContentSanitizer contentSanitizer) {
+		super();
+		this.postRepo = postRepo;
+		this.commentsRepo = commentsRepo;
+		this.modelMapper = modelMapper;
+		this.userRepo = userRepo;
+		this.likeRepo = likeRepo;
+		this.contentSanitizer = contentSanitizer;
+	}
 
 	@Override
 	public CommentsDto createComment(CommentsDto commentsDto) {
@@ -62,6 +74,9 @@ public class CommentsServiceImpl implements CommentsService {
 
 	@Override
 	public CommentsDto replyToComment(Integer parentCommentId, CommentsDto commentsDto) {
+		
+	    String sanitizedContent = contentSanitizer.sanitizeContent(commentsDto.getContent());
+
 		// Fetch the Parent Comment, User, and Post
 		Comments parentComment = commentsRepo.findById(parentCommentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", parentCommentId));
@@ -71,7 +86,7 @@ public class CommentsServiceImpl implements CommentsService {
 
 		// Create a new reply comment
 		Comments reply = new Comments();
-		reply.setContent(commentsDto.getContent());
+		reply.setContent(sanitizedContent);
 		reply.setPost(post);
 		reply.setUser(user);
 		reply.setUsername(user.getName());

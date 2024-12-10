@@ -1,7 +1,6 @@
 package com.kksg.blog.services.impl;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -89,7 +88,7 @@ public class PostServiceImpl implements PostService {
 		String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
 		post.setSlug(ensureUniqueSlug(generatedSlug));
 		post.setPostImage("default.jpg");
-		post.setPostAddedDate(new Date());
+		post.setPostAddedDate(LocalDateTime.now());
 		post.setUser(user);
 		post.setPostCategory(category);
 		post.setStatus(PostStatus.PENDING);
@@ -260,7 +259,6 @@ public class PostServiceImpl implements PostService {
 		List<Post> posts = this.postRepo.findByPostTitleContaining(keyword);
 		List<PostDto> postDtos = posts.stream().map((post) -> modelMapper.map(post, PostDto.class))
 				.collect(Collectors.toList());
-
 		return postDtos;
 	}
 

@@ -13,16 +13,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kksg.blog.payloads.ApiResponse;
 import com.kksg.blog.payloads.CommentsDto;
+import com.kksg.blog.payloads.FlagRequest;
 import com.kksg.blog.services.CommentsService;
+import com.kksg.blog.services.FlaggedCommentService;
 
 @RestController
 @RequestMapping("/api/v1")
 public class CommentController {
 
 	private CommentsService commentsService;
+	
+    private FlaggedCommentService flaggedCommentService;
 
-	public CommentController(CommentsService commentsService) {
+	public CommentController(CommentsService commentsService, FlaggedCommentService flaggedCommentService) {
 		this.commentsService = commentsService;
+		this.flaggedCommentService = flaggedCommentService;
 	}
 	
 	@PostMapping("/comment")
@@ -59,4 +64,14 @@ public class CommentController {
 		long likeCount = commentsService.getCommentLikeCount(commentId);
 		return ResponseEntity.ok(likeCount);  // Return 200 OK with the like count
 	}
+	
+	// Flag a comment
+    @PostMapping("/comment/{commentId}/flag")
+    public ResponseEntity<String> flagComment( @PathVariable Integer commentId, @RequestBody FlagRequest flagRequest) {
+        
+        // Flag the comment and notify the admin
+        flaggedCommentService.flagComment( commentId, flagRequest.getUserId(), flagRequest.getReason());
+        return ResponseEntity.status(HttpStatus.CREATED).body("Comment flagged successfully");
+    }
+	
 }

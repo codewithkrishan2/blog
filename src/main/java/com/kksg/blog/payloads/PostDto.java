@@ -1,6 +1,5 @@
 package com.kksg.blog.payloads;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +23,7 @@ public class PostDto {
 	private String postTitle;
 	private String postContent;
 	private String postImage;
-	private Date postAddedDate;
+	private String postAddedDate;
 	private CategoryDto postCategory;
 	private UserDto user;
 	private Set<CommentsDto> comments = new HashSet<>();
