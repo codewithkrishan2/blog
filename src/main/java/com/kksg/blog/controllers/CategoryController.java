@@ -27,41 +27,68 @@ public class CategoryController {
 	@Autowired
 	private CategoryService categoryService;
 
+	// Create a new Category
     @PostMapping("/create")
-	public ResponseEntity<CategoryDto> createCategory(@Valid
-			@RequestBody CategoryDto categoryDto){
-		CategoryDto createdCategory = this.categoryService.createCategory(
-				categoryDto);
-		return new ResponseEntity<CategoryDto>(
-				createdCategory, HttpStatus.CREATED);
-	}
-    
+    public ResponseEntity<ApiResponse> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
+        try {
+            CategoryDto createdCategory = this.categoryService.createCategory(categoryDto);
+            ApiResponse response = new ApiResponse("Success", null, createdCategory);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while creating category", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Update an existing Category
     @PutMapping("/update/{categoryId}")
-    public ResponseEntity<CategoryDto> updateCategory(@Valid
-    		@RequestBody CategoryDto categoryDto,
-    		@PathVariable Integer categoryId){
-    	CategoryDto updatedCategory = this.categoryService.updateCategory(categoryDto, categoryId);
-    	return new ResponseEntity<CategoryDto>(
-    			updatedCategory, HttpStatus.OK);
+    public ResponseEntity<ApiResponse> updateCategory(@Valid @RequestBody CategoryDto categoryDto, @PathVariable Integer categoryId) {
+        try {
+            CategoryDto updatedCategory = this.categoryService.updateCategory(categoryDto, categoryId);
+            ApiResponse response = new ApiResponse("Success", null, updatedCategory);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while updating category", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
-    
+
+    // Delete an existing Category by ID
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse> deleteCategoryById(@PathVariable Integer categoryId){
-    	this.categoryService.deleteCategory(categoryId);
-    	return new ResponseEntity<ApiResponse> ( 
-    			 new ApiResponse("Successfully deleted", true),
-    			 HttpStatus.OK);    	
+    public ResponseEntity<ApiResponse> deleteCategoryById(@PathVariable Integer categoryId) {
+        try {
+            this.categoryService.deleteCategory(categoryId);
+            ApiResponse response = new ApiResponse("Success", "Category deleted successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while deleting category", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
-    
+
+    // Get a Category by ID
     @GetMapping("/{categoryId}")
-    public ResponseEntity<?> getCategoryById(@PathVariable Integer categoryId){
-    	CategoryDto categoryById = this.categoryService.getCategoryById(categoryId);
-    	return new ResponseEntity<CategoryDto>(categoryById, HttpStatus.OK);
+    public ResponseEntity<ApiResponse> getCategoryById(@PathVariable Integer categoryId) {
+        try {
+            CategoryDto categoryById = this.categoryService.getCategoryById(categoryId);
+            ApiResponse response = new ApiResponse("Success", null, categoryById);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Category not found", null);
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
     }
-    
+
+    // Get all Categories
     @GetMapping("/all")
-    public ResponseEntity<?> getAllCategories(){
-    	List<CategoryDto> allCategory = this.categoryService.getAllCategory();
-    	return new ResponseEntity<List<CategoryDto>>(allCategory, HttpStatus.OK);
+    public ResponseEntity<ApiResponse> getAllCategories() {
+        try {
+            List<CategoryDto> allCategory = this.categoryService.getAllCategory();
+            ApiResponse response = new ApiResponse("Success", null, allCategory);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while fetching categories", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
 }

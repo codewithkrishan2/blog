@@ -21,57 +21,92 @@ import com.kksg.blog.services.FlaggedCommentService;
 @RequestMapping("/api/v1")
 public class CommentController {
 
-	private CommentsService commentsService;
-	
+
+    private CommentsService commentsService;
     private FlaggedCommentService flaggedCommentService;
 
-	public CommentController(CommentsService commentsService, FlaggedCommentService flaggedCommentService) {
-		this.commentsService = commentsService;
-		this.flaggedCommentService = flaggedCommentService;
-	}
-	
-	@PostMapping("/comment")
-	public ResponseEntity<CommentsDto> createComment( @RequestBody CommentsDto commentsDto) {
-		CommentsDto createdComment = this.commentsService.createComment(commentsDto);
-		return new ResponseEntity<>(createdComment, HttpStatus.CREATED);
-	}
-	
-	@PostMapping("/comment/{parentCommentId}/reply")
-    public ResponseEntity<CommentsDto> replyToComment(
-            @PathVariable Integer parentCommentId, @RequestBody CommentsDto dto ) {
-        
-        CommentsDto replyComment = commentsService.replyToComment(parentCommentId, dto);
-        return new ResponseEntity<>(replyComment, HttpStatus.CREATED);
+    public CommentController(CommentsService commentsService, FlaggedCommentService flaggedCommentService) {
+        this.commentsService = commentsService;
+        this.flaggedCommentService = flaggedCommentService;
     }
-	
-	@DeleteMapping("/comment/{commentId}")
-	public ResponseEntity<ApiResponse> deleteComment(
-			@PathVariable Integer commentId) {
-		this.commentsService.deleteComment(commentId);
-		return new ResponseEntity<>(new ApiResponse("Comments Deleted Successfully", true), HttpStatus.OK);
-	}
-	
-	// Toggle like for a comment
+
+    // Create a new comment
+    @PostMapping("/comment")
+    public ResponseEntity<ApiResponse> createComment(@RequestBody CommentsDto commentsDto) {
+        try {
+            CommentsDto createdComment = this.commentsService.createComment(commentsDto);
+            ApiResponse response = new ApiResponse("Success", null, createdComment);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while creating comment", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Reply to an existing comment
+    @PostMapping("/comment/{parentCommentId}/reply")
+    public ResponseEntity<ApiResponse> replyToComment(@PathVariable Integer parentCommentId, @RequestBody CommentsDto dto) {
+        try {
+            CommentsDto replyComment = commentsService.replyToComment(parentCommentId, dto);
+            ApiResponse response = new ApiResponse("Success", null, replyComment);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while replying to comment", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Delete a comment
+    @DeleteMapping("/comment/{commentId}")
+    public ResponseEntity<ApiResponse> deleteComment(@PathVariable Integer commentId) {
+        try {
+            this.commentsService.deleteComment(commentId);
+            ApiResponse response = new ApiResponse("Success", "Comment deleted successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while deleting comment", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Toggle like for a comment
     @PostMapping("/comment/{commentId}/like")
-    public ResponseEntity<Void> toggleLikeComment(@PathVariable Integer commentId, @RequestParam Integer userId) {
-        commentsService.toggleLikeComment(commentId, userId);
-        return ResponseEntity.ok().build();  // Return 200 OK after toggling
+    public ResponseEntity<ApiResponse> toggleLikeComment(@PathVariable Integer commentId, @RequestParam Integer userId) {
+        try {
+            commentsService.toggleLikeComment(commentId, userId);
+            ApiResponse response = new ApiResponse("Success", "Like toggled successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while toggling like", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
-    
-    //get like count
-	@GetMapping("/comment/{commentId}/like-count")
-	public ResponseEntity<Long> getCommentLikeCount(@PathVariable Integer commentId) {
-		long likeCount = commentsService.getCommentLikeCount(commentId);
-		return ResponseEntity.ok(likeCount);  // Return 200 OK with the like count
-	}
-	
-	// Flag a comment
+
+    // Get the like count of a comment
+    @GetMapping("/comment/{commentId}/like-count")
+    public ResponseEntity<ApiResponse> getCommentLikeCount(@PathVariable Integer commentId) {
+        try {
+            long likeCount = commentsService.getCommentLikeCount(commentId);
+            ApiResponse response = new ApiResponse("Success", null, likeCount);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while fetching like count", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Flag a comment
     @PostMapping("/comment/{commentId}/flag")
-    public ResponseEntity<String> flagComment( @PathVariable Integer commentId, @RequestBody FlagRequest flagRequest) {
-        
-        // Flag the comment and notify the admin
-        flaggedCommentService.flagComment( commentId, flagRequest.getUserId(), flagRequest.getReason());
-        return ResponseEntity.status(HttpStatus.CREATED).body("Comment flagged successfully");
+    public ResponseEntity<ApiResponse> flagComment(@PathVariable Integer commentId, @RequestBody FlagRequest flagRequest) {
+        try {
+            // Flag the comment and notify the admin
+            flaggedCommentService.flagComment(commentId, flagRequest.getUserId(), flagRequest.getReason());
+            ApiResponse response = new ApiResponse("Success", "Comment flagged successfully", null);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse response = new ApiResponse("Failed", "Error while flagging comment", null);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
     }
 	
 }

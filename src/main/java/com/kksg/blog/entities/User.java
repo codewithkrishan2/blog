@@ -28,6 +28,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,7 +58,11 @@ public class User implements UserDetails {
     private LocalDateTime otpExpiration; 
     
     private String about;
-    //private String role;
+    
+    @Column(updatable = false)
+    private LocalDateTime createdOn;
+    
+    private LocalDateTime updatedOn;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
@@ -78,8 +84,6 @@ public class User implements UserDetails {
 		return authorities;
 	}
 
-	
-	
 	@Override
 	public String getUsername() {
 		
@@ -105,6 +109,15 @@ public class User implements UserDetails {
 	public boolean isEnabled() {
 		return true;
 	}
-    
+	
+    @PrePersist
+    public void onCreate() {
+        createdOn = LocalDateTime.now();
+        updatedOn = createdOn;
+    }
 
+    @PreUpdate
+    public void onUpdate() {
+        updatedOn = LocalDateTime.now();
+    }
 }

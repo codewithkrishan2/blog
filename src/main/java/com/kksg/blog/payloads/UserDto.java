@@ -9,22 +9,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @NoArgsConstructor
+@AllArgsConstructor
 @Setter
 @Getter
 public class UserDto {
 
     private int userId;
     
-    @NotBlank
+    @NotBlank(message = "Name is mandatory")
     @Size(min = 3, message = "Name Must be min 3 char")
     private String name;
     
-    //@Pattern(regexp = )
     @NotBlank(message = "Email is mandatory")
     @Email(message = "Email Address is not valid")
     private String email;
@@ -38,6 +39,10 @@ public class UserDto {
     private String about;
     
     private Set<RolesDto> roles = new HashSet<>();
+    
+    private String createdOn;
+    
+    private String updatedOn;
     
     @JsonIgnore
     public String getPassword() {

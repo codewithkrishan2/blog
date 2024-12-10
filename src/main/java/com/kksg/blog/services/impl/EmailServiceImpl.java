@@ -26,7 +26,7 @@ public class EmailServiceImpl implements EmailService {
         message.setFrom("krishankantsinghtesting@gmail.com");
         message.setTo(to);
         message.setSubject("Your OTP Code");
-        message.setText("To login to your account, Your OTP code is: " + otp);
+        message.setText("Dear user, To login to your account, Your OTP code is: " + otp+" This code is valid for 5 minutes. Please Don't share it with anyone.");
         mailSender.send(message);
     }
 
