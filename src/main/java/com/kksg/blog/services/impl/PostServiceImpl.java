@@ -3,6 +3,7 @@ package com.kksg.blog.services.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.kksg.blog.entities.Category;
 import com.kksg.blog.entities.Likes;
 import com.kksg.blog.entities.Post;
+import com.kksg.blog.entities.Tag;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
@@ -26,6 +28,7 @@ import com.kksg.blog.repositories.CategoryRepo;
 import com.kksg.blog.repositories.CommentsRepo;
 import com.kksg.blog.repositories.LikeRepository;
 import com.kksg.blog.repositories.PostRepo;
+import com.kksg.blog.repositories.TagRepository;
 import com.kksg.blog.repositories.UserRepo;
 import com.kksg.blog.services.NotificationService;
 import com.kksg.blog.services.PostService;
@@ -59,6 +62,9 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	private NotificationService notificationService;
+	
+	@Autowired
+	private TagRepository tagRepository;
 
 	@Override
 	public PostDto createPost(PostDto postDto, Integer userId, Integer categoryId) {
@@ -84,6 +90,20 @@ public class PostServiceImpl implements PostService {
 			post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent())); // Optionally generate keywords from
 		}
 
+		// Handle tags: If tags exist, map them
+        if (postDto.getTags() != null && !postDto.getTags().isEmpty()) {
+            Set<Tag> tags = postDto.getTags().stream()
+                .map(tagDto -> {
+                    Tag tag = tagRepository.findByTagName(tagDto.getTagName())
+                        .orElseGet(() -> {
+                            Tag newTag = new Tag();
+                            newTag.setTagName(tagDto.getTagName());
+                            return tagRepository.save(newTag);
+                        });
+                    return tag;
+                }).collect(Collectors.toSet());
+            post.setTags(tags);
+        }
 		// Generate a slug from the post title
 		String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
 		post.setSlug(ensureUniqueSlug(generatedSlug));
@@ -92,6 +112,8 @@ public class PostServiceImpl implements PostService {
 		post.setUser(user);
 		post.setPostCategory(category);
 		post.setStatus(PostStatus.PENDING);
+		
+		
 
 		Post newPost = this.postRepo.save(post);
 		
@@ -171,6 +193,21 @@ public class PostServiceImpl implements PostService {
 
 		String sanitizedContent = contentSanitizer.sanitizeContent(postDto.getPostContent());
         postDto.setPostContent(sanitizedContent);
+        
+     // Update tags if provided
+        if (postDto.getTags() != null) {
+            Set<Tag> tags = postDto.getTags().stream()
+                .map(tagDto -> {
+                    Tag tag = tagRepository.findByTagName(tagDto.getTagName())
+                        .orElseGet(() -> {
+                            Tag newTag = new Tag();
+                            newTag.setTagName(tagDto.getTagName());
+                            return tagRepository.save(newTag);
+                        });
+                    return tag;
+                }).collect(Collectors.toSet());
+            post.setTags(tags);
+        }
         
 		post.setPostTitle(postDto.getPostTitle());
 		post.setPostContent(postDto.getPostContent());
@@ -313,8 +350,12 @@ public class PostServiceImpl implements PostService {
 			postListDto.setLikeCount(likeCount);
 			return postListDto;
 		}).collect(Collectors.toList());
-
 		return postDtos;
 	}
 
+	@Override
+	public List<PostListDto> searchPostsByTag(String tagName) {
+	    List<Post> posts = postRepo.findByTags_TagName(tagName);
+	    return posts.stream().map(post -> modelMapper.map(post, PostListDto.class)).collect(Collectors.toList());
+	}
 }

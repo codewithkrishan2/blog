@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kksg.blog.payloads.ApiResponse;
 import com.kksg.blog.payloads.CategoryDto;
 import com.kksg.blog.services.CategoryService;
+import com.kksg.blog.utils.AppConstants;
 
 import jakarta.validation.Valid;
 
@@ -27,16 +28,17 @@ public class CategoryController {
 	@Autowired
 	private CategoryService categoryService;
 
-	// Create a new Category
+    // Create a new Category
     @PostMapping("/create")
     public ResponseEntity<ApiResponse> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
         try {
-            CategoryDto createdCategory = this.categoryService.createCategory(categoryDto);
-            ApiResponse response = new ApiResponse("Success", null, createdCategory);
+            CategoryDto createdCategory = categoryService.createCategory(categoryDto);
+            ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, "Category created successfully", createdCategory);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while creating category", null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            // Detailed error message
+            ApiResponse response = new ApiResponse(AppConstants.FAILED, "Error while creating category: " + e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -44,12 +46,13 @@ public class CategoryController {
     @PutMapping("/update/{categoryId}")
     public ResponseEntity<ApiResponse> updateCategory(@Valid @RequestBody CategoryDto categoryDto, @PathVariable Integer categoryId) {
         try {
-            CategoryDto updatedCategory = this.categoryService.updateCategory(categoryDto, categoryId);
-            ApiResponse response = new ApiResponse("Success", null, updatedCategory);
+            CategoryDto updatedCategory = categoryService.updateCategory(categoryDto, categoryId);
+            ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, "Category updated successfully", updatedCategory);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while updating category", null);
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            // Detailed error message
+            ApiResponse response = new ApiResponse(AppConstants.FAILED, "Error while updating category: " + e.getMessage(), null, null);
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -57,11 +60,12 @@ public class CategoryController {
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<ApiResponse> deleteCategoryById(@PathVariable Integer categoryId) {
         try {
-            this.categoryService.deleteCategory(categoryId);
-            ApiResponse response = new ApiResponse("Success", "Category deleted successfully", null);
+            categoryService.deleteCategory(categoryId);
+            ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, "Category deleted successfully", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while deleting category", null);
+            // Detailed error message
+            ApiResponse response = new ApiResponse(AppConstants.FAILED, "Error while deleting category: " + e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -70,11 +74,12 @@ public class CategoryController {
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiResponse> getCategoryById(@PathVariable Integer categoryId) {
         try {
-            CategoryDto categoryById = this.categoryService.getCategoryById(categoryId);
-            ApiResponse response = new ApiResponse("Success", null, categoryById);
+            CategoryDto categoryById = categoryService.getCategoryById(categoryId);
+            ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, null, categoryById);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Category not found", null);
+            // Detailed error message
+            ApiResponse response = new ApiResponse(AppConstants.FAILED, "Category not found: " + e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
     }
@@ -83,11 +88,12 @@ public class CategoryController {
     @GetMapping("/all")
     public ResponseEntity<ApiResponse> getAllCategories() {
         try {
-            List<CategoryDto> allCategory = this.categoryService.getAllCategory();
-            ApiResponse response = new ApiResponse("Success", null, allCategory);
+            List<CategoryDto> allCategories = categoryService.getAllCategory();
+            ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, null, allCategories);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while fetching categories", null);
+            // Detailed error message
+            ApiResponse response = new ApiResponse(AppConstants.FAILED, "Error while fetching categories: " + e.getMessage(), null, null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }

@@ -20,6 +20,8 @@ public interface PostRepo extends JpaRepository<Post, Integer> {
 	Boolean existsBySlug(String slug);
 	Long countByUser(User user);
 	
+	 List<Post> findByTags_TagName(String tagName);
+	
     @Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.likeCount DESC")
 	List<Post> findTopTrendingPosts(LocalDateTime sevenDaysAgo);
 }

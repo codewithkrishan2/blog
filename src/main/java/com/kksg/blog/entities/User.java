@@ -53,7 +53,7 @@ public class User implements UserDetails {
     
     private String password;
     
-    private int otp;
+    private String otp;
     
     private LocalDateTime otpExpiration; 
     

@@ -175,4 +175,9 @@ public class PostController {
 		return postService.getTrendingPosts();
 	}	
 
+	@GetMapping("/post/searchByTag")
+    public ResponseEntity<List<PostListDto>> searchPostsByTag(@RequestParam String tagName) {
+        List<PostListDto> posts = postService.searchPostsByTag(tagName);
+        return new ResponseEntity<>(posts, HttpStatus.OK);
+    }
 }

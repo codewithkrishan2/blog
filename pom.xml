@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.kksg.blog</groupId>
 	<artifactId>blog-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>2.0.0</version>
 	<name>blog-api</name>
 	<description>Blog Application Using Spring Boot Rest Web Services</description>
 	<properties>

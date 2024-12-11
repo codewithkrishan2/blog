@@ -5,13 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Setter
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse {
-    private String status;
-    private String error;
-    private String message;
-    private Object data; 
+@Getter
+@Setter
+public class TagDto {
+
+    private Integer tagId;
+    private String tagName;
 }

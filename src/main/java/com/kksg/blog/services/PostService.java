@@ -50,4 +50,6 @@ public interface PostService {
 
 	PostDto updatePostStatus(Integer postId, PostStatus newStatus);
 
+	List<PostListDto> searchPostsByTag(String tagName);
+
 }

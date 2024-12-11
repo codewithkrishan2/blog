@@ -1,5 +1,7 @@
 package com.kksg.blog.payloads;
 
+import java.util.Set;
+
 import lombok.Data;
 
 @Data
@@ -18,5 +20,5 @@ public class PostListDto {
 	private String slug;
     private long viewCount; 
     private long likeCount;
-
+    private Set<TagDto> tags;
 }

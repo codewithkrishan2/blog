@@ -30,15 +30,18 @@ public class CommentController {
         this.flaggedCommentService = flaggedCommentService;
     }
 
-    // Create a new comment
+ // Create a new comment
     @PostMapping("/comment")
     public ResponseEntity<ApiResponse> createComment(@RequestBody CommentsDto commentsDto) {
         try {
+            // Call service to create a comment
             CommentsDto createdComment = this.commentsService.createComment(commentsDto);
-            ApiResponse response = new ApiResponse("Success", null, createdComment);
+            // Prepare successful response with created comment data
+            ApiResponse response = new ApiResponse("Success", null, "Comment created successfully", createdComment);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while creating comment", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while creating comment", "Unable to create comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -47,11 +50,14 @@ public class CommentController {
     @PostMapping("/comment/{parentCommentId}/reply")
     public ResponseEntity<ApiResponse> replyToComment(@PathVariable Integer parentCommentId, @RequestBody CommentsDto dto) {
         try {
+            // Call service to reply to a comment using parentCommentId
             CommentsDto replyComment = commentsService.replyToComment(parentCommentId, dto);
-            ApiResponse response = new ApiResponse("Success", null, replyComment);
+            // Prepare successful response with reply comment data
+            ApiResponse response = new ApiResponse("Success", null, "Comment replied successfully", replyComment);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while replying to comment", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while replying to comment", "Unable to reply to comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -60,11 +66,14 @@ public class CommentController {
     @DeleteMapping("/comment/{commentId}")
     public ResponseEntity<ApiResponse> deleteComment(@PathVariable Integer commentId) {
         try {
+            // Call service to delete the comment by commentId
             this.commentsService.deleteComment(commentId);
-            ApiResponse response = new ApiResponse("Success", "Comment deleted successfully", null);
+            // Prepare success response indicating deletion
+            ApiResponse response = new ApiResponse("Success", null, "Comment deleted successfully", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while deleting comment", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while deleting comment", "Unable to delete comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -73,11 +82,14 @@ public class CommentController {
     @PostMapping("/comment/{commentId}/like")
     public ResponseEntity<ApiResponse> toggleLikeComment(@PathVariable Integer commentId, @RequestParam Integer userId) {
         try {
+            // Call service to toggle the like status of the comment
             commentsService.toggleLikeComment(commentId, userId);
-            ApiResponse response = new ApiResponse("Success", "Like toggled successfully", null);
+            // Prepare success response indicating that like status was toggled
+            ApiResponse response = new ApiResponse("Success", null, "Like toggled successfully", null);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while toggling like", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while toggling like", "Unable to toggle like for the comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -86,11 +98,14 @@ public class CommentController {
     @GetMapping("/comment/{commentId}/like-count")
     public ResponseEntity<ApiResponse> getCommentLikeCount(@PathVariable Integer commentId) {
         try {
+            // Call service to get the like count of the comment
             long likeCount = commentsService.getCommentLikeCount(commentId);
-            ApiResponse response = new ApiResponse("Success", null, likeCount);
+            // Prepare response with the like count
+            ApiResponse response = new ApiResponse("Success", null, "Like count fetched successfully", likeCount);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while fetching like count", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while fetching like count", "Unable to fetch like count for the comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
@@ -99,14 +114,15 @@ public class CommentController {
     @PostMapping("/comment/{commentId}/flag")
     public ResponseEntity<ApiResponse> flagComment(@PathVariable Integer commentId, @RequestBody FlagRequest flagRequest) {
         try {
-            // Flag the comment and notify the admin
+            // Call service to flag the comment with the reason
             flaggedCommentService.flagComment(commentId, flagRequest.getUserId(), flagRequest.getReason());
-            ApiResponse response = new ApiResponse("Success", "Comment flagged successfully", null);
+            // Prepare success response indicating that the comment was flagged
+            ApiResponse response = new ApiResponse("Success", null, "Comment flagged successfully", null);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
-            ApiResponse response = new ApiResponse("Failed", "Error while flagging comment", null);
+            // Handle error and return failure response
+            ApiResponse response = new ApiResponse("Failed", "Error while flagging comment", "Unable to flag comment", null);
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
-	
 }

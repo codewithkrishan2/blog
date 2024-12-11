@@ -20,7 +20,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-
 public class Category {
 
 	@Id
