@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +46,7 @@ public class UserServiceImpl implements UserService {
 	private PostRepo postRepo;
 
 	@Override
+	@CachePut(value = "users", key = "#userDto.userId")
 	public UserDto createUser(UserDto userDto) {
 		User user = this.dtoToUser(userDto);
 
@@ -72,6 +76,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Cacheable(value = "users", key = "#userId") 
 	public UserDto getUserById(Integer userId) {
 		User user = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
@@ -86,30 +91,17 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@CacheEvict(value = "users", key = "#userId")
 	public void deleteUser(Integer userId) {
 		User user = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", " Id ", userId));
 		user.getRoles().clear();
 		postRepo.deleteAll(user.getPosts());
-		// this.postRepo.deleteAll(user.getPosts());
-		// userRepo.save(user);
 		userRepo.delete(user);
 	}
 
-	// dto to user we were converting it manually, there are libraries available we
-	// can use that to convert
-
 	public User dtoToUser(UserDto userDto) {
-
-		// this will be converted automatically using ModelMapper
 		User user = this.modelMapper.map(userDto, User.class);
-
-		/*
-		 * //This is the manual process converting one object to another User user = new
-		 * User(); user.setId(userDto.getId()); user.setName(userDto.getName());
-		 * user.setAbout(userDto.getAbout()); user.setEmail(userDto.getEmail());
-		 * user.setPassword(userDto.getPassword());
-		 */
 		return user;
 
 	}
@@ -147,7 +139,15 @@ public class UserServiceImpl implements UserService {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 		List<String> roles = authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-		return roles.toString();
+		return String.join(", ", roles);
 	}
 
+	
+	//get user by email
+	@Override
+	@Cacheable(value = "users", key = "#email")
+	public UserDto getUserByEmail(String email) {
+		User user = this.userRepo.findByEmail(email).orElseThrow(() -> new ApiException("User not present"));
+		return this.modelMapper.map(user, UserDto.class);
+	}
 }

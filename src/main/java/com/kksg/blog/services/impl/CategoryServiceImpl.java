@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.entities.Category;
@@ -23,6 +26,7 @@ public class CategoryServiceImpl implements CategoryService {
 	private ModelMapper modelMapper;
 
 	@Override
+	@CachePut(value = "categories", key = "#categoryDto.categoryId")
 	public CategoryDto createCategory(CategoryDto categoryDto) {
 
 		Category parentCategory = null;
@@ -40,17 +44,16 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@CachePut(value = "categories", key = "#categoryDto.categoryId")
 	public CategoryDto updateCategory(CategoryDto categoryDto, Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
-
 		if (categoryDto.getParentCategoryId() != null) {
 			Category parentCategory = categoryRepo.findById(categoryDto.getParentCategoryId())
 					.orElseThrow(() -> new ResourceNotFoundException("Category", "Parent Category Id",
 							categoryDto.getParentCategoryId()));
 			category.setParentCategory(parentCategory);
 		}
-
 		category.setCategoryTitle(categoryDto.getCategoryTitle());
 		category.setCategoryDescription(categoryDto.getCategoryDescription());
 		Category updatedCategory = this.categoryRepo.save(category);
@@ -58,6 +61,7 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@CacheEvict(value = "categories", key = "#categoryId")
 	public void deleteCategory(Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category ", "Category Id", categoryId));
@@ -66,6 +70,7 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@Cacheable(value = "categories", key = "#categoryId")
 	public CategoryDto getCategoryById(Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
@@ -78,6 +83,7 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
+	@Cacheable(value = "categories", key = "'all_categories'") 
 	public List<CategoryDto> getAllCategory() {
 		List<Category> allCategories = this.categoryRepo.findAll();
 //		List<CategoryDto> categoryDtos = allCategory.stream().map((cat) -> this.modelMapper.map(cat, CategoryDto.class))

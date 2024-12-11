@@ -5,6 +5,9 @@ import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.entities.Comments;
@@ -54,10 +57,10 @@ public class CommentsServiceImpl implements CommentsService {
 	}
 
 	@Override
+	@CachePut(value = "comments", key = "#commentsDto.commentId")
 	public CommentsDto createComment(CommentsDto commentsDto) {
 		
 		String sanitizedContent = contentSanitizer.sanitizeContent(commentsDto.getContent());
-		
 		Integer postId = commentsDto.getPostId();
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id ", postId));
@@ -73,6 +76,7 @@ public class CommentsServiceImpl implements CommentsService {
 	}
 
 	@Override
+	@CachePut(value = "comments", key = "#commentsDto.commentId")
 	public CommentsDto replyToComment(Integer parentCommentId, CommentsDto commentsDto) {
 		
 	    String sanitizedContent = contentSanitizer.sanitizeContent(commentsDto.getContent());
@@ -98,6 +102,7 @@ public class CommentsServiceImpl implements CommentsService {
 	}
 
 	@Override
+	@CacheEvict(value = "comments", key = "#commentId")
 	public void deleteComment(Integer commentId) {
 		Comments comment = this.commentsRepo.findById(commentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
@@ -105,36 +110,31 @@ public class CommentsServiceImpl implements CommentsService {
 	}
 
 	@Override
+	@CacheEvict(value = "comments", key = "#commentId")
 	public void toggleLikeComment(Integer commentId, Integer userId) {
-		// Fetch the comment and user from the repository
 		Comments comment = commentsRepo.findById(commentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
-
-		// Check if the user has already liked the comment
 		Optional<Likes> existingLike = likeRepo.findByCommentAndUser(comment, user);
 
 		if (existingLike.isPresent()) {
-			// If the like exists, remove the like (unlike)
 			likeRepo.delete(existingLike.get());
 		} else {
-			// If the like does not exist, create a new like (like the comment)
 			Likes newLike = new Likes();
 			newLike.setComment(comment);
 			newLike.setUser(user);
 			newLike.setLikeDate(LocalDateTime.now());
-
-			// Save the new like to the repository
 			likeRepo.save(newLike);
 		}
 	}
 
 	@Override
+	@Cacheable(value = "comments", key = "#commentId")
 	public long getCommentLikeCount(Integer commentId) {
 		Comments comment = commentsRepo.findById(commentId)
 				.orElseThrow(() -> new ResourceNotFoundException("Comment", "Comment Id", commentId));
-		return likeRepo.countByComment(comment); // Return the like count for the comment
+		return likeRepo.countByComment(comment);
 	}
 
 }

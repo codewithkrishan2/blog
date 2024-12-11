@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -67,6 +70,7 @@ public class PostServiceImpl implements PostService {
 	private TagRepository tagRepository;
 
 	@Override
+	@CachePut(value = "posts", key = "#postDto.postId")
 	public PostDto createPost(PostDto postDto, Integer userId, Integer categoryId) {
 
 		String sanitizedContent = contentSanitizer.sanitizeContent(postDto.getPostContent());
@@ -138,6 +142,7 @@ public class PostServiceImpl implements PostService {
 	}
 	
 	@Override
+	@CacheEvict(value = "posts", key = "#postId")
 	public PostDto updatePostStatus(Integer postId, PostStatus newStatus) {
 	    Post post = postRepo.findById(postId)
 	            .orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
@@ -179,6 +184,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#postId") 
 	public long getPostLikeCount(Integer postId) {
 		Post post = postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
@@ -186,6 +192,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@CacheEvict(value = "posts", key = "{#postId, #post.postCategory.id}")
 	public PostDto updatePost(PostDto postDto, Integer postId) {
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post ", "Post Id", postId));
@@ -218,6 +225,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@CacheEvict(value = "posts", key = "#postId")
 	public void deletePost(Integer postId) {
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post ", "Post Id", postId));
@@ -256,6 +264,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#postId") 
 	public PostDto getPostById(Integer postId) {
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
@@ -272,6 +281,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#categoryId")
 	public List<PostDto> getPostByCategory(Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id", categoryId));
@@ -282,6 +292,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#userId")
 	public List<PostDto> getPostByUser(Integer userId) {
 		User user = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
@@ -300,6 +311,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#postId")
 	public PostAnalyticsDto getPostAnalytics(Integer postId) {
 		Post post = postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
@@ -319,6 +331,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "users", key = "#userId")
 	public UserAnalyticsDto getUserAnalytics(Integer userId) {
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
@@ -354,6 +367,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Cacheable(value = "posts", key = "#tagName")
 	public List<PostListDto> searchPostsByTag(String tagName) {
 	    List<Post> posts = postRepo.findByTags_TagName(tagName);
 	    return posts.stream().map(post -> modelMapper.map(post, PostListDto.class)).collect(Collectors.toList());
