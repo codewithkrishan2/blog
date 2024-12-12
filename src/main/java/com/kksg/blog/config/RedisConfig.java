@@ -1,7 +1,5 @@
 package com.kksg.blog.config;
 
-import java.time.Duration;
-
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -19,31 +17,29 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
 	@Bean
-    RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(factory);
-        template.setKeySerializer(new StringRedisSerializer()); // Key serializer
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // Value serializer
-        return template;
-    }
+	RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+		RedisTemplate<String, Object> template = new RedisTemplate<>();
+		template.setConnectionFactory(factory);
+		template.setKeySerializer(new StringRedisSerializer()); // Key serializer
+		template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // Value serializer
+		return template;
+	}
 
-    // Bean for CacheManager (for Redis caching)
-    @Bean
-    CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
-        
-        return RedisCacheManagerBuilder
-                .fromConnectionFactory(redisConnectionFactory)
-                .cacheDefaults(cacheConfiguration)
-                .build();
-    }
-    
-    @Bean
-    RedisCacheConfiguration cacheConfiguration() {
-        return RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)) // Set TTL to 10 minutes
-                .disableCachingNullValues();
-    }
+	@Bean
+	CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+		RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+				.serializeKeysWith(
+						RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+				.serializeValuesWith(RedisSerializationContext.SerializationPair
+						.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+
+		return RedisCacheManagerBuilder.fromConnectionFactory(redisConnectionFactory).cacheDefaults(cacheConfiguration)
+				.build();
+	}
+
+	/**
+	 * @Bean RedisCacheConfiguration cacheConfiguration() { return
+	 *       RedisCacheConfiguration.defaultCacheConfig()
+	 *       .entryTtl(Duration.ofMinutes(5)) .disableCachingNullValues(); }
+	 */
 }

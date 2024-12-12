@@ -35,7 +35,6 @@ public class PostDto {
     
     private long viewCount; 
     private long likeCount;
-    
     private Set<TagDto> tags;
 	
 }

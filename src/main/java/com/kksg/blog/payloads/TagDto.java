@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TagDto {
-
     private Integer tagId;
     private String tagName;
 }

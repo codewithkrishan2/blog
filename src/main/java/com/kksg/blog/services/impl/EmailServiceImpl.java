@@ -5,6 +5,7 @@ import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.kksg.blog.services.EmailService;
@@ -21,6 +22,7 @@ public class EmailServiceImpl implements EmailService {
 	}
 
 	@Override
+	@Async
 	public void sendOtpEmail(String to, int otp) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("krishankantsinghtesting@gmail.com");
@@ -35,7 +37,6 @@ public class EmailServiceImpl implements EmailService {
 		Random random = new Random();
         int otp = random.nextInt(900000) + 100000;
         return otp;
-		
 	}
 
 }

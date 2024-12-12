@@ -2,7 +2,6 @@ package com.kksg.blog.controllers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kksg.blog.entities.enums.PostStatus;
+import com.kksg.blog.payloads.ApiResponse;
 import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
-import com.kksg.blog.payloads.PostListDto;
 import com.kksg.blog.payloads.PostResponse;
 import com.kksg.blog.payloads.UserAnalyticsDto;
 import com.kksg.blog.services.FileService;
@@ -52,132 +51,330 @@ public class PostController {
 	// Create Post By User Id And Category Id
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/user/{userId}/category/{categoryId}/createPost")
-	public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto, @PathVariable Integer userId,
+	public ResponseEntity<ApiResponse> createPost(@RequestBody PostDto postDto, @PathVariable Integer userId,
 			@PathVariable Integer categoryId) {
-		PostDto createdPost = this.postService.createPost(postDto, userId, categoryId);
-		return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
+		try {
+			PostDto createdPost = this.postService.createPost(postDto, userId, categoryId);
+			ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Post Created Successfully",
+					createdPost);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.CREATED);
+		} catch (Exception e) {
+			ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		}
 	}
-	
-	//Api for changing the post status
+
+	// Api for changing the post status
 	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping("/post/{postId}/status")
-	public ResponseEntity<PostDto> updatePostStatus(@PathVariable Integer postId, @RequestParam PostStatus newStatus) {
-		PostDto updatedPost = this.postService.updatePostStatus(postId, newStatus);
-		return new ResponseEntity<>(updatedPost, HttpStatus.OK);
+	public ResponseEntity<ApiResponse> updatePostStatus(@PathVariable Integer postId,
+			@RequestParam PostStatus newStatus) {
+		ApiResponse apiResponse = null;
+		try {
+			PostDto updatedPost = this.postService.updatePostStatus(postId, newStatus);
+			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Post Status Updated Successfully", updatedPost);
+		} catch (Exception e) {
+			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		}
+
+		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
-	// Get Posts By User
+//	// Get Posts By User
+//	@GetMapping("/user/{userId}/posts")
+//	public ResponseEntity<ApiResponse> getPostsByUser(@PathVariable Integer userId) {
+//		ApiResponse apiResponse = null;
+//		try {
+//		List<PostDto> postsByUser = this.postService.getPostByUser(userId);
+//		apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postsByUser);		
+//		} catch (Exception e) {
+//			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+//			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+//		}
+//		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
+//	}
+	
 	@GetMapping("/user/{userId}/posts")
-	public ResponseEntity<List<PostDto>> getPostsByUser(@PathVariable Integer userId) {
+	public ResponseEntity<ApiResponse> getPostsByUser(@PathVariable Integer userId,
+	        @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+	        @RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+	        @RequestParam(defaultValue = "postId", required = false) String sortBy,
+	        @RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
 
-		List<PostDto> postsByUser = this.postService.getPostByUser(userId);
-
-		return new ResponseEntity<List<PostDto>>(postsByUser, HttpStatus.OK);
+	    ApiResponse apiResponse = null;
+	    try {
+	        PostResponse postResponse = this.postService.getPostByUser(userId, pageNumber, pageSize, sortBy, sortDir);
+	        apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postResponse);
+	    } catch (Exception e) {
+	        apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+	    }
+	    return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 
-	// Get posts By Category
+
+//	// Get posts By Category
+//	@GetMapping("/categories/{categoryId}/posts")
+//	public ResponseEntity<ApiResponse> getPostsByCategory(@PathVariable Integer categoryId) {
+//		ApiResponse apiResponse = null;
+//		try {
+//			List<PostDto> postsByCategory = this.postService.getPostByCategory(categoryId);
+//			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postsByCategory);
+//		} catch (Exception e) {
+//			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+//			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+//		}
+//		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
+//	}
+
 	@GetMapping("/categories/{categoryId}/posts")
-	public ResponseEntity<List<PostDto>> getPostsByCategory(@PathVariable Integer categoryId) {
+	public ResponseEntity<ApiResponse> getPostsByCategory(@PathVariable Integer categoryId,
+	        @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+	        @RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+	        @RequestParam(defaultValue = "postId", required = false) String sortBy,
+	        @RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
 
-		List<PostDto> postsByCategory = this.postService.getPostByCategory(categoryId);
-		return new ResponseEntity<List<PostDto>>(postsByCategory, HttpStatus.OK);
+	    ApiResponse apiResponse = null;
+	    try {
+	        PostResponse postResponse = this.postService.getPostByCategory(categoryId, pageNumber, pageSize, sortBy, sortDir);
+	        apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postResponse);
+	    } catch (Exception e) {
+	        apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+	    }
+	    return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 
+	
 	// Get All Posts
 	@GetMapping("/posts/all")
-	public ResponseEntity<PostResponse> getAllPost(
+	public ResponseEntity<ApiResponse> getAllPost(
 			@RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
 			@RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
-			@RequestParam(defaultValue = AppConstants.SORT_BY, required = false) String sortBy,
+			@RequestParam(defaultValue = "postId", required = false) String sortBy,
 			@RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir
-
 	) {
-		PostResponse postResponse = this.postService.getAllPost(pageNumber, pageSize, sortBy, sortDir);
-		return new ResponseEntity<PostResponse>(postResponse, HttpStatus.OK);
+		ApiResponse apiResponse = null;
+		try {
+			PostResponse postResponse = this.postService.getAllPost(pageNumber, pageSize, sortBy, sortDir);
+			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successful", postResponse);
+		} catch (Exception e) {
+			apiResponse = new ApiResponse(AppConstants.FAILED, e.getCause().getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);			
+		}
+		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
 	// Get Post By Post Id
 	@GetMapping("/post/{postId}")
-	public ResponseEntity<PostDto> getPostById(@PathVariable Integer postId) {
-
-		PostDto postById = this.postService.getPostById(postId);
-		return new ResponseEntity<PostDto>(postById, HttpStatus.OK);
+	public ResponseEntity<ApiResponse> getPostById(@PathVariable Integer postId) {
+		ApiResponse apiResponse = null;
+		try {
+			PostDto postById = this.postService.getPostById(postId);
+			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched post", postById);
+		} catch (Exception e) {
+			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
 	// Delete one Post
 	@DeleteMapping("/post/delete/{postId}")
-	public ResponseEntity<String> deletePostById(@PathVariable Integer postId) {
-		this.postService.deletePost(postId);
-		return new ResponseEntity<String>("Successfully Delete", HttpStatus.OK);
+	public ResponseEntity<ApiResponse> deletePostById(@PathVariable Integer postId) {
+		ApiResponse apiResponse = null;
+		try {
+			this.postService.deletePost(postId);
+			apiResponse =  new ApiResponse(AppConstants.SUCCESS, null, "Successfully Delete", null);
+		} catch (Exception e) {
+			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		}
+		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
 	@PutMapping("/post/update/{postId}")
-	public ResponseEntity<PostDto> updatePostById(@Valid @RequestBody PostDto postDto, @PathVariable Integer postId) {
-
-		PostDto updatedPost = this.postService.updatePost(postDto, postId);
-		return new ResponseEntity<PostDto>(updatedPost, HttpStatus.OK);
+	public ResponseEntity<ApiResponse> updatePostById(@Valid @RequestBody PostDto postDto, @PathVariable Integer postId) {
+		ApiResponse apiResponse = null;
+		try {
+			PostDto updatedPost = this.postService.updatePost(postDto, postId);
+			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Post Updated Successfully", updatedPost);
+		} catch (Exception e) {
+			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		}
+		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
+//	 // Search post by Title containing
+//    @GetMapping("/posts/search/{keywords}")
+//    public ResponseEntity<ApiResponse> searchPostByTitle(@PathVariable String keywords) {
+//        try {
+//            List<PostDto> postDtos = this.postService.searchPost(keywords);
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postDtos);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+//        } catch (Exception e) {
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+//        }
+//    }
+	
 	// Search post by Title containing
 	@GetMapping("/posts/search/{keywords}")
-	public ResponseEntity<List<PostDto>> searchPostByTitle(@PathVariable String keywords) {
-		List<PostDto> postDtos = this.postService.searchPost(keywords);
-		return new ResponseEntity<List<PostDto>>(postDtos, HttpStatus.OK);
+	public ResponseEntity<ApiResponse> searchPostByTitle(
+	        @PathVariable String keywords,
+	        @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+	        @RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+	        @RequestParam(defaultValue = "postTitle", required = false) String sortBy,
+	        @RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
+
+	    ApiResponse apiResponse = null;
+	    try {
+	        PostResponse postResponse = this.postService.searchPost(keywords, pageNumber, pageSize, sortBy, sortDir);
+	        apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts", postResponse);
+	    } catch (Exception e) {
+	        apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+	    }
+	    return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 
-	// Post image Upload
-	@PostMapping("/post/image/upload/{postId}")
-	public ResponseEntity<PostDto> uploadPostImages(@RequestParam MultipartFile image, @PathVariable Integer postId)
-			throws IOException {
 
-		PostDto postById = this.postService.getPostById(postId);
-
-		String fileName = this.fileService.uploadImage(path, image);
-		postById.setPostImage(fileName);
-		PostDto updatedPost = this.postService.updatePost(postById, postId);
-		return new ResponseEntity<PostDto>(updatedPost, HttpStatus.OK);
-	}
-
-	// Method to serve uploaded images:
-	@GetMapping(value = "/post/image/{imageName}", produces = MediaType.IMAGE_JPEG_VALUE)
-	public void downloadImage(@PathVariable String imageName, HttpServletResponse response) throws IOException {
-		InputStream resource = this.fileService.getResources(path, imageName);
-		response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-		StreamUtils.copy(resource, response.getOutputStream());
-	}
-
-	// Like a post
-	@PostMapping("/post/{postId}/like")
-	public ResponseEntity<Void> likePost(@PathVariable Integer postId, @RequestParam Integer userId) {
-		postService.toggleLikePost(postId, userId);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
-	}
-
-	// get like count
-	@GetMapping("/post/{postId}/like-count")
-	public ResponseEntity<Long> getPostLikeCount(@PathVariable Integer postId) {
-		long likeCount = postService.getPostLikeCount(postId);
-		return ResponseEntity.ok(likeCount); // Return 200 OK with the like count
-	}
-
-	@GetMapping("/post/{postId}/analytics")
-	public PostAnalyticsDto getPostAnalytics(@PathVariable Integer postId) {
-		return postService.getPostAnalytics(postId);
-	}
-
-	@GetMapping("/user/{userId}/analytics")
-	public UserAnalyticsDto getUserAnalytics(@PathVariable Integer userId) {
-		return postService.getUserAnalytics(userId);
-	}
-
-	@GetMapping("/post/trending")
-	public List<PostListDto> getTrendingPosts() {
-		return postService.getTrendingPosts();
-	}	
-
-	@GetMapping("/post/searchByTag")
-    public ResponseEntity<List<PostListDto>> searchPostsByTag(@RequestParam String tagName) {
-        List<PostListDto> posts = postService.searchPostsByTag(tagName);
-        return new ResponseEntity<>(posts, HttpStatus.OK);
+    // Post image Upload
+    @PostMapping("/post/image/upload/{postId}")
+    public ResponseEntity<ApiResponse> uploadPostImages(@RequestParam MultipartFile image, @PathVariable Integer postId)
+            throws IOException {
+        try {
+            PostDto postById = this.postService.getPostById(postId);
+            String fileName = this.fileService.uploadImage(path, image);
+            postById.setPostImage(fileName);
+            PostDto updatedPost = this.postService.updatePost(postById, postId);
+            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Image Uploaded Successfully", updatedPost);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
     }
+
+    // Method to serve uploaded images:
+    @GetMapping(value = "/post/image/{imageName}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public void downloadImage(@PathVariable String imageName, HttpServletResponse response) throws IOException {
+        InputStream resource = this.fileService.getResources(path, imageName);
+        response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+        StreamUtils.copy(resource, response.getOutputStream());
+    }
+
+    // Like a post
+    @PostMapping("/post/{postId}/like")
+    public ResponseEntity<ApiResponse> likePost(@PathVariable Integer postId, @RequestParam Integer userId) {
+        try {
+            postService.toggleLikePost(postId, userId);
+            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Post Liked Successfully", null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Get like count
+    @GetMapping("/post/{postId}/like-count")
+    public ResponseEntity<ApiResponse> getPostLikeCount(@PathVariable Integer postId) {
+        try {
+            long likeCount = postService.getPostLikeCount(postId);
+            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched like count", likeCount);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/post/{postId}/analytics")
+    public ResponseEntity<ApiResponse> getPostAnalytics(@PathVariable Integer postId) {
+        try {
+            PostAnalyticsDto postAnalytics = postService.getPostAnalytics(postId);
+            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched post analytics", postAnalytics);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/user/{userId}/analytics")
+    public ResponseEntity<ApiResponse> getUserAnalytics(@PathVariable Integer userId) {
+        try {
+            UserAnalyticsDto userAnalytics = postService.getUserAnalytics(userId);
+            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched user analytics", userAnalytics);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+//    @GetMapping("/post/trending")
+//    public ResponseEntity<ApiResponse> getTrendingPosts() {
+//        try {
+//            List<PostListDto> trendingPosts = postService.getTrendingPosts();
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched trending posts", trendingPosts);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+//        } catch (Exception e) {
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+//        }
+//    }
+    
+    @GetMapping("/post/trending")
+    public ResponseEntity<ApiResponse> getTrendingPosts(
+            @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(defaultValue = "postAddedDate", required = false) String sortBy,
+            @RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
+
+        ApiResponse apiResponse = null;
+        try {
+            PostResponse postResponse = this.postService.getTrendingPosts(pageNumber, pageSize);
+            apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched trending posts", postResponse);
+        } catch (Exception e) {
+            apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+
+//    @GetMapping("/post/searchByTag")
+//    public ResponseEntity<ApiResponse> searchPostsByTag(@RequestParam String tagName) {
+//        try {
+//            List<PostListDto> posts = postService.searchPostsByTag(tagName);
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts by tag", posts);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+//        } catch (Exception e) {
+//            ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+//            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+//        }
+//    }
+    
+    @GetMapping("/post/searchByTag")
+    public ResponseEntity<ApiResponse> searchPostsByTag(
+            @RequestParam String tagName,
+            @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(defaultValue = "postAddedDate", required = false) String sortBy,
+            @RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
+        ApiResponse apiResponse = null;
+        try {
+            PostResponse postResponse = this.postService.searchPostsByTag(tagName, pageNumber, pageSize);
+            apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts by tag", postResponse);
+        } catch (Exception e) {
+            apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
+            return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
 }

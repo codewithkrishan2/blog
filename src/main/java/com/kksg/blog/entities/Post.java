@@ -53,7 +53,7 @@ public class Post {
 	@ManyToOne
 	private User user;
 	
-	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Comments> comments = new HashSet<>();
 	
 	@Enumerated(EnumType.STRING)
