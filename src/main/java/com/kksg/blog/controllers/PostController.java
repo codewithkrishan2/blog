@@ -51,10 +51,10 @@ public class PostController {
 	// Create Post By User Id And Category Id
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/user/{userId}/category/{categoryId}/createPost")
-	public ResponseEntity<ApiResponse> createPost(@RequestBody PostDto postDto, @PathVariable Integer userId,
+	public ResponseEntity<ApiResponse> createOrUpdatePost(@RequestBody PostDto postDto, @PathVariable Integer userId,
 			@PathVariable Integer categoryId) {
 		try {
-			PostDto createdPost = this.postService.createPost(postDto, userId, categoryId);
+			PostDto createdPost = this.postService.createOrUpdatePost(postDto, userId, categoryId);
 			ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Post Created Successfully",
 					createdPost);
 			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.CREATED);
@@ -77,7 +77,6 @@ public class PostController {
 			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);
 			return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
 		}
-
 		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.OK);
 	}
 
@@ -172,6 +171,7 @@ public class PostController {
 		ApiResponse apiResponse = null;
 		try {
 			PostDto postById = this.postService.getPostById(postId);
+//			this.postService.incrementViewCount(postById);
 			apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched post", postById);
 		} catch (Exception e) {
 			apiResponse = new ApiResponse(AppConstants.FAILED, e.getMessage(), null, null);

@@ -41,6 +41,8 @@ import com.kksg.blog.utils.ContentSanitizer;
 import com.kksg.blog.utils.PaginationUtil;
 import com.kksg.blog.utils.SlugUtil;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class PostServiceImpl implements PostService {
 
@@ -67,70 +69,90 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	private NotificationService notificationService;
-	
+
 	@Autowired
 	private TagRepository tagRepository;
 
 	@Override
-	public PostDto createPost(PostDto postDto, Integer userId, Integer categoryId) {
+	@Transactional
+	public PostDto createOrUpdatePost(PostDto postDto, Integer userId, Integer categoryId) {
 
 		String sanitizedContent = contentSanitizer.sanitizeContent(postDto.getPostContent());
 		postDto.setPostContent(sanitizedContent);
 
 		User user = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
-
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id", categoryId));
-		Post post = this.modelMapper.map(postDto, Post.class);
 
-		// Set default values for SEO fields if not provided
+		Post post;
+		if (postDto.getPostId() != null) {
+			post = this.postRepo.findById(postDto.getPostId())
+					.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postDto.getPostId()));
+			if (post.getStatus() != PostStatus.DRAFT) {
+				if (post.getStatus() == PostStatus.PUBLISHED) {
+					post.setStatus(PostStatus.PENDING);
+				}
+			}
+		} else {
+			post = new Post();
+		}
+
+		// Set or update the post fields
+		post.setPostTitle(postDto.getPostTitle());
+		post.setPostContent(postDto.getPostContent());
+		post.setPostCategory(category);
+		post.setUser(user);
+		post.setPostAddedDate(LocalDateTime.now());
+
+		// Handle SEO fields if not provided
 		if (post.getMetaTitle() == null || post.getMetaTitle().isEmpty()) {
-			post.setMetaTitle(post.getPostTitle()); // Use the title as the meta title by default
+			post.setMetaTitle(post.getPostTitle());
 		}
 		if (post.getMetaDescription() == null || post.getMetaDescription().isEmpty()) {
 			post.setMetaDescription(post.getPostContent().substring(0, Math.min(150, post.getPostContent().length())));
 		}
 		if (post.getMetaKeywords() == null || post.getMetaKeywords().isEmpty()) {
-			post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent())); // Optionally generate keywords from
+			post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent()));
 		}
 
-		// Handle tags: If tags exist, map them to Tag entities
-	    if (postDto.getTags() != null && !postDto.getTags().isEmpty()) {
-	        Set<Tag> tags = postDto.getTags().stream()
-	            .map(tagDto -> {
-	                // Try to find existing tag by name, otherwise create a new one
-	                return tagRepository.findByTagName(tagDto.getTagName())
-	                    .orElseGet(() -> {
-	                        Tag newTag = new Tag();
-	                        newTag.setTagName(tagDto.getTagName());
-	                        return tagRepository.save(newTag); // Save new tag if not found
-	                    });
-	            }).collect(Collectors.toSet());
-	        post.setTags(tags); // Set the tags to the post
-	    }
-		// Generate a slug from the post title
+		if (postDto.getTags() != null && !postDto.getTags().isEmpty()) {
+			Set<Tag> tags = postDto.getTags().stream().map(tagDto -> {
+				return tagRepository.findByTagName(tagDto.getTagName()).orElseGet(() -> {
+					Tag newTag = new Tag();
+					newTag.setTagName(tagDto.getTagName());
+					return tagRepository.save(newTag);
+				});
+			}).collect(Collectors.toSet());
+			post.setTags(tags);
+		}
+
 		String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
 		post.setSlug(ensureUniqueSlug(generatedSlug));
-		post.setPostImage("default.jpg");
-		post.setPostAddedDate(LocalDateTime.now());
-		post.setUser(user);
-		post.setPostCategory(category);
-		post.setStatus(PostStatus.PENDING);
 
-		Post newPost = this.postRepo.save(post);
-		// Send notification email
-	    notificationService.sendPostStatusNotification(user, newPost);
-	 
-	    // Map the saved Post entity back to PostDto (including tags)
-	    PostDto responsePostDto = this.modelMapper.map(newPost, PostDto.class);
-	    
-	    
-	    if (newPost.getTags() != null) {
-	        responsePostDto.setTags(newPost.getTags().stream()
-	            .map(tag -> new TagDto(tag.getTagId(),tag.getTagName())) // Map Tag entities to TagDto
-	            .collect(Collectors.toSet()));
-	    }
+		// Set default post image if not provided
+		if (post.getPostImage() == null || post.getPostImage().isEmpty()) {
+			post.setPostImage("default.jpg");
+		}
+
+		if (postDto.getStatus() == PostStatus.DRAFT) {
+			post.setStatus(PostStatus.DRAFT);
+		} else {
+			post.setStatus(PostStatus.PENDING);
+		}
+
+		Post savedPost = this.postRepo.save(post);
+
+//		if (savedPost.getStatus() != PostStatus.DRAFT) {
+//			notificationService.sendPostStatusNotification(user, savedPost);
+//		}
+
+		PostDto responsePostDto = this.modelMapper.map(savedPost, PostDto.class);
+
+		if (savedPost.getTags() != null) {
+			responsePostDto.setTags(savedPost.getTags().stream()
+					.map(tag -> new TagDto(tag.getTagId(), tag.getTagName())).collect(Collectors.toSet()));
+		}
 
 		return responsePostDto;
 	}
@@ -148,39 +170,33 @@ public class PostServiceImpl implements PostService {
 		}
 		return slug;
 	}
-	
+
 	@Override
 	@CacheEvict(value = "posts", key = "#postId")
 	public PostDto updatePostStatus(Integer postId, PostStatus newStatus) {
-	    Post post = postRepo.findById(postId)
-	            .orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
-	    post.setStatus(newStatus);
-	    postRepo.save(post);
+		Post post = postRepo.findById(postId)
+				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
+		post.setStatus(newStatus);
+		postRepo.save(post);
 
-	    // Notify the user about the status update
-	    notificationService.sendPostStatusNotification(post.getUser(), post);
+		// Notify the user about the status update
+		notificationService.sendPostStatusNotification(post.getUser(), post);
 		return this.modelMapper.map(post, PostDto.class);
 	}
 
-
 	@Override
 	public void toggleLikePost(Integer postId, Integer userId) {
-		// Fetch the post and user from the repository
 		Post post = postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
 
-		// Check if the user has already liked the post
 		Optional<Likes> existingLike = likeRepo.findByPostAndUser(post, user);
 
 		if (existingLike.isPresent()) {
-			// If the like exists, remove the like (unlike)
 			likeRepo.delete(existingLike.get());
-			// Decrement the like count in the Post entity
 			post.setLikeCount(post.getLikeCount() - 1);
 		} else {
-			// If the like does not exist, create a new like (like the post)
 			Likes newLike = new Likes();
 			newLike.setPost(post);
 			newLike.setUser(user);
@@ -192,11 +208,11 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	@Cacheable(value = "posts", key = "#postId") 
+	@Cacheable(value = "posts", key = "#postId")
 	public long getPostLikeCount(Integer postId) {
 		Post post = postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
-		return likeRepo.countByPost(post); // Return the like count for the post
+		return likeRepo.countByPost(post);
 	}
 
 	@Override
@@ -207,23 +223,20 @@ public class PostServiceImpl implements PostService {
 		Category category = categoryRepo.findById(postDto.getPostCategory().getCategoryId()).get();
 
 		String sanitizedContent = contentSanitizer.sanitizeContent(postDto.getPostContent());
-        postDto.setPostContent(sanitizedContent);
-        
-     // Update tags if provided
-        if (postDto.getTags() != null) {
-            Set<Tag> tags = postDto.getTags().stream()
-                .map(tagDto -> {
-                    Tag tag = tagRepository.findByTagName(tagDto.getTagName())
-                        .orElseGet(() -> {
-                            Tag newTag = new Tag();
-                            newTag.setTagName(tagDto.getTagName());
-                            return tagRepository.save(newTag);
-                        });
-                    return tag;
-                }).collect(Collectors.toSet());
-            post.setTags(tags);
-        }
-        
+		postDto.setPostContent(sanitizedContent);
+
+		if (postDto.getTags() != null) {
+			Set<Tag> tags = postDto.getTags().stream().map(tagDto -> {
+				Tag tag = tagRepository.findByTagName(tagDto.getTagName()).orElseGet(() -> {
+					Tag newTag = new Tag();
+					newTag.setTagName(tagDto.getTagName());
+					return tagRepository.save(newTag);
+				});
+				return tag;
+			}).collect(Collectors.toSet());
+			post.setTags(tags);
+		}
+
 		post.setPostTitle(postDto.getPostTitle());
 		post.setPostContent(postDto.getPostContent());
 		post.setPostImage(postDto.getPostImage());
@@ -269,13 +282,11 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	@Cacheable(value = "posts", key = "#postId") 
 	public PostDto getPostById(Integer postId) {
 		Post post = this.postRepo.findById(postId)
 				.orElseThrow(() -> new ResourceNotFoundException("Post", "Post Id", postId));
-		PostDto postDto = modelMapper.map(post, PostDto.class);
-		// increment post view count
 		incrementViewCount(post);
+		PostDto postDto = modelMapper.map(post, PostDto.class);
 		return postDto;
 	}
 
@@ -285,111 +296,77 @@ public class PostServiceImpl implements PostService {
 		postRepo.save(post);
 	}
 
-//	@Override
-//	@Cacheable(value = "posts", key = "#categoryId")
-//	public List<PostDto> getPostByCategory(Integer categoryId) {
-//		Category category = this.categoryRepo.findById(categoryId)
-//				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id", categoryId));
-//		List<Post> postsByCategory = this.postRepo.findByPostCategory(category);
-//		List<PostDto> postDtos = postsByCategory.stream().map((post) -> this.modelMapper.map(post, PostDto.class))
-//				.collect(Collectors.toList());
-//		return postDtos;
-//	}
-	
 	@Override
 	@Cacheable(value = "posts", key = "#categoryId")
-	public PostResponse getPostByCategory(Integer categoryId, Integer pageNumber, Integer pageSize, String sortBy, String sortDir) {
-	    Category category = this.categoryRepo.findById(categoryId)
-	            .orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id", categoryId));
+	public PostResponse getPostByCategory(Integer categoryId, Integer pageNumber, Integer pageSize, String sortBy,
+			String sortDir) {
+		Category category = this.categoryRepo.findById(categoryId)
+				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id", categoryId));
 
-	    Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
-	    Page<Post> postsByCategoryPage = this.postRepo.findByPostCategory(category, pageable);
-	    List<Post> postsByCategory = postsByCategoryPage.getContent();
+		Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
+		Page<Post> postsByCategoryPage = this.postRepo.findByPostCategory(category, pageable);
+		List<Post> postsByCategory = postsByCategoryPage.getContent();
 
-	    List<PostListDto> postDtos = postsByCategory.stream()
-	            .map(post -> this.modelMapper.map(post, PostListDto.class))
-	            .collect(Collectors.toList());
+		List<PostListDto> postDtos = postsByCategory.stream().map(post -> this.modelMapper.map(post, PostListDto.class))
+				.collect(Collectors.toList());
 
-	    PostResponse postResponse = new PostResponse();
-	    postResponse.setContent(postDtos);
-	    postResponse.setPageNumber(postsByCategoryPage.getNumber());
-	    postResponse.setPageSize(postsByCategoryPage.getSize());
-	    postResponse.setTotalElements(postsByCategoryPage.getTotalElements());
-	    postResponse.setTotalPages(postsByCategoryPage.getTotalPages());
-	    postResponse.setFirstPage(postsByCategoryPage.isFirst());
-	    postResponse.setLastPage(postsByCategoryPage.isLast());
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(postDtos);
+		postResponse.setPageNumber(postsByCategoryPage.getNumber());
+		postResponse.setPageSize(postsByCategoryPage.getSize());
+		postResponse.setTotalElements(postsByCategoryPage.getTotalElements());
+		postResponse.setTotalPages(postsByCategoryPage.getTotalPages());
+		postResponse.setFirstPage(postsByCategoryPage.isFirst());
+		postResponse.setLastPage(postsByCategoryPage.isLast());
 
-	    return postResponse;
+		return postResponse;
 	}
 
-
-//	@Override
-//	@Cacheable(value = "posts", key = "#userId")
-//	public List<PostDto> getPostByUser(Integer userId) {
-//		User user = this.userRepo.findById(userId)
-//				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
-//		List<Post> postsByUser = this.postRepo.findByUser(user);
-//		List<PostDto> postDtos = postsByUser.stream().map((post) -> this.modelMapper.map(post, PostDto.class))
-//				.collect(Collectors.toList());
-//		return postDtos;
-//	}
-	
-	
 	@Override
 	@Cacheable(value = "posts", key = "#userId")
-	public PostResponse getPostByUser(Integer userId, Integer pageNumber, Integer pageSize, String sortBy, String sortDir) {
-	    User user = this.userRepo.findById(userId)
-	            .orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
+	public PostResponse getPostByUser(Integer userId, Integer pageNumber, Integer pageSize, String sortBy,
+			String sortDir) {
+		User user = this.userRepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User", "User Id", userId));
 
-	    Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
-	    Page<Post> postsByUserPage = this.postRepo.findByUser(user, pageable);
-	    List<Post> postsByUser = postsByUserPage.getContent();
+		Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
+		Page<Post> postsByUserPage = this.postRepo.findByUser(user, pageable);
+		List<Post> postsByUser = postsByUserPage.getContent();
 
-	    List<PostListDto> postDtos = postsByUser.stream()
-	            .map(post -> this.modelMapper.map(post, PostListDto.class))
-	            .collect(Collectors.toList());
+		List<PostListDto> postDtos = postsByUser.stream().map(post -> this.modelMapper.map(post, PostListDto.class))
+				.collect(Collectors.toList());
 
-	    PostResponse postResponse = new PostResponse();
-	    postResponse.setContent(postDtos);
-	    postResponse.setPageNumber(postsByUserPage.getNumber());
-	    postResponse.setPageSize(postsByUserPage.getSize());
-	    postResponse.setTotalElements(postsByUserPage.getTotalElements());
-	    postResponse.setTotalPages(postsByUserPage.getTotalPages());
-	    postResponse.setFirstPage(postsByUserPage.isFirst());
-	    postResponse.setLastPage(postsByUserPage.isLast());
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(postDtos);
+		postResponse.setPageNumber(postsByUserPage.getNumber());
+		postResponse.setPageSize(postsByUserPage.getSize());
+		postResponse.setTotalElements(postsByUserPage.getTotalElements());
+		postResponse.setTotalPages(postsByUserPage.getTotalPages());
+		postResponse.setFirstPage(postsByUserPage.isFirst());
+		postResponse.setLastPage(postsByUserPage.isLast());
 
-	    return postResponse;
+		return postResponse;
 	}
 
-
-//	@Override
-//	public List<PostDto> searchPost(String keyword) {
-//		List<Post> posts = this.postRepo.findByPostTitleContaining(keyword);
-//		List<PostDto> postDtos = posts.stream().map((post) -> modelMapper.map(post, PostDto.class))
-//				.collect(Collectors.toList());
-//		return postDtos;
-//	}
-	
 	@Override
-	public PostResponse searchPost(String keyword, Integer pageNumber, Integer pageSize, String sortBy, String sortDir) {
-	    Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
-	    Page<Post> posts = this.postRepo.findByPostTitleContaining(keyword, pageable);
-	    List<PostListDto> postDtos = posts.stream()
-	            .map(post -> modelMapper.map(post, PostListDto.class))
-	            .collect(Collectors.toList());
+	public PostResponse searchPost(String keyword, Integer pageNumber, Integer pageSize, String sortBy,
+			String sortDir) {
+		Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
+		Page<Post> posts = this.postRepo.findByPostTitleContaining(keyword, pageable);
+		List<PostListDto> postDtos = posts.stream().map(post -> modelMapper.map(post, PostListDto.class))
+				.collect(Collectors.toList());
 
-	    PostResponse postResponse = new PostResponse();
-	    postResponse.setContent(postDtos);
-	    postResponse.setPageNumber(posts.getNumber());
-	    postResponse.setPageSize(posts.getSize());
-	    postResponse.setTotalElements(posts.getTotalElements());
-	    postResponse.setTotalPages(posts.getTotalPages());
-	    postResponse.setFirstPage(posts.isFirst());
-	    postResponse.setLastPage(posts.isLast());
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(postDtos);
+		postResponse.setPageNumber(posts.getNumber());
+		postResponse.setPageSize(posts.getSize());
+		postResponse.setTotalElements(posts.getTotalElements());
+		postResponse.setTotalPages(posts.getTotalPages());
+		postResponse.setFirstPage(posts.isFirst());
+		postResponse.setLastPage(posts.isLast());
 
-	    return postResponse;
+		return postResponse;
 	}
-
 
 	@Override
 	@Cacheable(value = "posts", key = "#postId")
@@ -419,7 +396,7 @@ public class PostServiceImpl implements PostService {
 		Long postCount = postRepo.countByUser(user);
 		Long likeCount = likeRepo.countByUser(user);
 		Long commentCount = commentsRepo.countByUser(user);
-		
+
 		UserAnalyticsDto analyticsDto = new UserAnalyticsDto();
 		analyticsDto.setUserId(userId);
 		analyticsDto.setPostCount(postCount);
@@ -429,76 +406,59 @@ public class PostServiceImpl implements PostService {
 		return analyticsDto;
 	}
 
-//	@Override
-//	public List<PostListDto> getTrendingPosts() {
-//		// Define a time range (e.g., last 15 days)
-//		LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(15);
-//		List<Post> topTrendingPosts = postRepo.findTopTrendingPosts(sevenDaysAgo);
-//
-//		List<PostListDto> postDtos = topTrendingPosts.stream().map((post) -> {
-//			PostListDto postListDto = this.modelMapper.map(post, PostListDto.class);
-//			postListDto.setUserName(post.getUser().getName());
-//			postListDto.setCommentsCount(post.getComments().size());
-//			Long likeCount = post.getLikeCount();
-//			postListDto.setLikeCount(likeCount);
-//			return postListDto;
-//		}).collect(Collectors.toList());
-//		return postDtos;
-//	}
-	
 	@Override
 	public PostResponse getTrendingPosts(Integer pageNumber, Integer pageSize) {
-	    LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(15);
-	    Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Order.desc("likeCount")));
-	    Page<Post> topTrendingPosts = postRepo.findTopTrendingPosts(sevenDaysAgo, pageable);
-	    List<PostListDto> postDtos = topTrendingPosts.stream().map(post -> {
-	        PostListDto postListDto = this.modelMapper.map(post, PostListDto.class);
-	        postListDto.setUserName(post.getUser().getName());
-	        postListDto.setCommentsCount(post.getComments().size());
-	        Long likeCount = post.getLikeCount();
-	        postListDto.setLikeCount(likeCount);
-	        return postListDto;
-	    }).collect(Collectors.toList());
 
-	    PostResponse postResponse = new PostResponse();
-	    postResponse.setContent(postDtos);
-	    postResponse.setPageNumber(topTrendingPosts.getNumber());
-	    postResponse.setPageSize(topTrendingPosts.getSize());
-	    postResponse.setTotalElements(topTrendingPosts.getTotalElements());
-	    postResponse.setTotalPages(topTrendingPosts.getTotalPages());
-	    postResponse.setFirstPage(topTrendingPosts.isFirst());
-	    postResponse.setLastPage(topTrendingPosts.isLast());
+		int maxTotalElements = 30;
+		if (pageSize > 10) {
+			pageSize = 10;
+		}
+		LocalDateTime fifteenDaysAgo = LocalDateTime.now().minusDays(15);
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Order.desc("postId")));
 
-	    return postResponse;
+		Page<Post> topTrendingPosts = postRepo.findTopTrendingPosts(fifteenDaysAgo, pageable);
+		List<PostListDto> postDtos = topTrendingPosts.stream().map(post -> {
+			PostListDto postListDto = this.modelMapper.map(post, PostListDto.class);
+			postListDto.setUserName(post.getUser().getName());
+			postListDto.setCommentsCount(post.getComments().size());
+			Long likeCount = post.getLikeCount();
+			postListDto.setLikeCount(likeCount);
+			return postListDto;
+		}).collect(Collectors.toList());
+
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(postDtos);
+		postResponse.setPageNumber(topTrendingPosts.getNumber());
+		postResponse.setPageSize(topTrendingPosts.getSize());
+
+		// Limit the total elements to 30
+		postResponse.setTotalElements(Math.min(topTrendingPosts.getTotalElements(), maxTotalElements));
+		postResponse.setTotalPages((int) Math.ceil((double) postResponse.getTotalElements() / pageSize));
+
+		postResponse.setFirstPage(topTrendingPosts.isFirst());
+		postResponse.setLastPage(topTrendingPosts.isLast());
+
+		return postResponse;
 	}
 
-
-//	@Override
-//	@Cacheable(value = "posts", key = "#tagName")
-//	public List<PostListDto> searchPostsByTag(String tagName) {
-//	    List<Post> posts = postRepo.findByTags_TagName(tagName);
-//	    return posts.stream().map(post -> modelMapper.map(post, PostListDto.class)).collect(Collectors.toList());
-//	}
-	
 	@Override
 	@Cacheable(value = "posts", key = "#tagName")
 	public PostResponse searchPostsByTag(String tagName, Integer pageNumber, Integer pageSize) {
-	    Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("postAddedDate").descending());
-	    Page<Post> postsPage = postRepo.findByTags_TagName(tagName, pageable);
-	    List<PostListDto> postDtos = postsPage.stream()
-	        .map(post -> modelMapper.map(post, PostListDto.class))
-	        .collect(Collectors.toList());
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("postAddedDate").descending());
+		Page<Post> postsPage = postRepo.findByTags_TagName(tagName, pageable);
+		List<PostListDto> postDtos = postsPage.stream().map(post -> modelMapper.map(post, PostListDto.class))
+				.collect(Collectors.toList());
 
-	    PostResponse postResponse = new PostResponse();
-	    postResponse.setContent(postDtos);
-	    postResponse.setPageNumber(postsPage.getNumber());
-	    postResponse.setPageSize(postsPage.getSize());
-	    postResponse.setTotalElements(postsPage.getTotalElements());
-	    postResponse.setTotalPages(postsPage.getTotalPages());
-	    postResponse.setFirstPage(postsPage.isFirst());
-	    postResponse.setLastPage(postsPage.isLast());
-	    
-	    return postResponse;
+		PostResponse postResponse = new PostResponse();
+		postResponse.setContent(postDtos);
+		postResponse.setPageNumber(postsPage.getNumber());
+		postResponse.setPageSize(postsPage.getSize());
+		postResponse.setTotalElements(postsPage.getTotalElements());
+		postResponse.setTotalPages(postsPage.getTotalPages());
+		postResponse.setFirstPage(postsPage.isFirst());
+		postResponse.setLastPage(postsPage.isLast());
+
+		return postResponse;
 	}
 
 }

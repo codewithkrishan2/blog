@@ -3,6 +3,8 @@ package com.kksg.blog.payloads;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.kksg.blog.entities.enums.PostStatus;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -36,5 +38,7 @@ public class PostDto {
     private long viewCount; 
     private long likeCount;
     private Set<TagDto> tags;
+    
+    private PostStatus status;
 	
 }

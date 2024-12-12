@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.kksg.blog.entities.FlaggedComment;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
+import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.services.NotificationService;
 
 @Service
@@ -20,14 +21,39 @@ public class NotificationServiceImpl implements NotificationService {
 	
 	@Override
     public void sendPostStatusNotification(User user, Post post) {
+		
+		String rejectSubject = "Your post '" + post.getPostTitle() + "' has been rejected.";
+		String approveSubject = "Your post '" + post.getPostTitle() + "' has been approved.";
+		String pendingSubject = "Your post '" + post.getPostTitle() + "' is Pending.";
+		
+		String rejectMessage = "Hello " + user.getName() + ",\n\n" +
+							   "Your post titled '" + post.getPostTitle() + "' has been rejected. \n" +
+							   "Post Status: " + post.getStatus() + "\n\n" +
+							   "Thank you for contributing!";
+		String approveMessage = "Hello " + user.getName() + ",\n\n" +
+								"Your post titled '" + post.getPostTitle() + "' has been approved. \n" +
+								"Post Status: " + post.getStatus() + "\n\n" +
+								"Thank you for contributing!";
+		String pendingMessage = "Hello " + user.getName() + ",\n\n" +
+								"Your post titled '" + post.getPostTitle() + "' is currently under review. \n" +
+								"Post Status: " + post.getStatus() + "\n\n" +
+								"Thank you for contributing!";
+		
         // Create the email content
-        String subject = "Your post '" + post.getPostTitle() + "' is awaiting approval.";
-        String message = "Hello " + user.getName() + ",\n\n" +
-                         "Your post titled '" + post.getPostTitle() + "' is currently under review. " +
-                         "We will notify you once it has been approved or rejected.\n\n" +
-                         "Post Status: " + post.getStatus() + "\n\n" +
-                         "Thank you for contributing!";
-
+        String subject = null;
+        String message = null;
+        
+        if (post.getStatus().equals(PostStatus.PUBLISHED)) {
+			subject = approveSubject;
+			message = approveMessage;
+		} else if (post.getStatus().equals(PostStatus.REJECTED)) {
+			subject = rejectSubject;
+			message = rejectMessage;
+		} else {
+			subject = pendingSubject;
+			message = pendingMessage;
+		}
+        
         // Create and send the email
         SimpleMailMessage email = new SimpleMailMessage();
         email.setTo(user.getEmail());

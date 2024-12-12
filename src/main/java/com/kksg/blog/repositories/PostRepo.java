@@ -26,8 +26,11 @@ public interface PostRepo extends JpaRepository<Post, Integer> {
 //	@Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.likeCount DESC")
 //	List<Post> findTopTrendingPosts(LocalDateTime sevenDaysAgo);
 
-	@Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.likeCount DESC")
-	Page<Post> findTopTrendingPosts(LocalDateTime sevenDaysAgo, Pageable pageable);
+//	@Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.viewCount DESC")
+	@Query("SELECT p FROM Post p " +
+	           "WHERE p.postAddedDate >= :fifteenDaysAgo " +
+	           "ORDER BY (p.likeCount + p.viewCount + size(p.comments)) DESC")    
+	Page<Post> findTopTrendingPosts(LocalDateTime fifteenDaysAgo, Pageable pageable);
 
 	// Pagination support for fetching posts by user
 	Page<Post> findByUser(User user, Pageable pageable);
