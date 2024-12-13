@@ -5,16 +5,13 @@ import lombok.Setter;
 
 import java.io.Serial;
 
-//@SuppressWarnings("serial")
 @Setter
 @Getter
-public class ResourceNotFoundException extends RuntimeException{
+public class ResourceNotFoundException extends RuntimeException {
 
     @Serial
     private static final long serialVersionUID = 1L;
-	/**
-	 * 
-	 */
+
 	//Declare a String resourceName and String fieldsName and long fieldValue
 	String resourceName;
 	String fieldsName;

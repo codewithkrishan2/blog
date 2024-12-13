@@ -54,95 +54,81 @@ public class AuthContoller {
 	private UserRepo userRepo;
 	@Autowired
 	private ModelMapper mapper;
-	
+
 	@Autowired
 	private EmailService emailService;
-	
-	//password encoder
+
+	// password encoder
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse> createToken(@RequestBody JwtAuthRequest request) throws Exception {
 
-		try {
-			User user = this.userRepo.findByEmail(request.getUsername()).orElseThrow(() -> new ApiException("User not found"));
-			this.authenticate(request.getUsername(), request.getPassword());
-			Integer otp = 123456;
-			//String encryptedOtp = EncryptionUtil.encrypt(String.valueOf(otp));
-			
-		    System.out.println("-------------------------------"+otp);
-		    String hashedOtp = passwordEncoder.encode(otp.toString());
-		    
-		    System.out.println("---------------------------------"+hashedOtp);
-		    user.setOtp(hashedOtp);
-		    user.setOtpExpiration(LocalDateTime.now().plusMinutes(10)); // Set OTP expiration to 5 minutes
+		User user = this.userRepo.findByEmail(request.getUsername())
+				.orElseThrow(() -> new ApiException("User not found"));
+		this.authenticate(request.getUsername(), request.getPassword());
+		Integer otp = 123456;
+		// String encryptedOtp = EncryptionUtil.encrypt(String.valueOf(otp));
 
-		    userRepo.save(user);
+		System.out.println("-------------------------------" + otp);
+		String hashedOtp = passwordEncoder.encode(otp.toString());
 
-		    // Send OTP to user's email
-		    this.emailService.sendOtpEmail(user.getEmail(), otp);
-		    
-		    // Inform the user that OTP has been sent
-		    ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "OTP sent successfully", null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+		System.out.println("---------------------------------" + hashedOtp);
+		user.setOtp(hashedOtp);
+		user.setOtpExpiration(LocalDateTime.now().plusMinutes(10)); // Set OTP expiration to 5 minutes
 
-		} catch (Exception e) {
-			ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, "Invalid Username or password", null, null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
-		}
+		userRepo.save(user);
+
+		// Send OTP to user's email
+		this.emailService.sendOtpEmail(user.getEmail(), otp);
+
+		// Inform the user that OTP has been sent
+		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "OTP sent successfully", null);
+		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+
 	}
-	
-	
+
 	@PostMapping("/verify-otp")
-	public ResponseEntity<ApiResponse>  verifyOtp(@RequestBody OtpRequest otpRequest) throws Exception {
-	    try {
-	    	// Find the user by email
-		    User user = this.userRepo.findByEmail(otpRequest.getUsername()).orElseThrow(() -> new ApiException("User not found"));
+	public ResponseEntity<ApiResponse> verifyOtp(@RequestBody OtpRequest otpRequest) throws Exception {
+		// Find the user by email
+		User user = this.userRepo.findByEmail(otpRequest.getUsername())
+				.orElseThrow(() -> new ApiException("User not found"));
 
-		    // Check if the OTP is valid
-		    Integer userOtp = otpRequest.getOtp();
-		    
-		    System.out.println("-------------------------------"+userOtp);
-		    boolean matches = passwordEncoder.matches(userOtp.toString(), user.getOtp());
-		    
-		    if (!matches) {
-		        throw new ApiException("Invalid OTP");
-		    }
+		// Check if the OTP is valid
+		Integer userOtp = otpRequest.getOtp();
 
-		    // Check if the OTP has expired
-		    if (user.getOtpExpiration().isBefore(LocalDateTime.now())) {
-		        throw new ApiException("OTP has expired");
-		    }
+		System.out.println("-------------------------------" + userOtp);
+		boolean matches = passwordEncoder.matches(userOtp.toString(), user.getOtp());
 
-		    // OTP is valid, proceed to generate JWT token
-		    UserDetails userDetails = this.userDetailsService.loadUserByUsername(otpRequest.getUsername());
-		    String token = this.jwtTokenHelper.generateToken(userDetails);
+		if (!matches) {
+			throw new ApiException("Invalid OTP");
+		}
 
-		    // Clear OTP from user record (optional, for security)
-		    user.setOtp(null);
-		    user.setOtpExpiration(null);
-		    userRepo.save(user);
+		// Check if the OTP has expired
+		if (user.getOtpExpiration().isBefore(LocalDateTime.now())) {
+			throw new ApiException("OTP has expired");
+		}
 
-		    // Create and return JWT response
-		    JwtAuthResponse response = new JwtAuthResponse();
-		    response.setToken(token);
-		    response.setUser(mapper.map(user, UserDto.class));
-		    
-		    // Return success response
-	        ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "OPT Varification Successful", response);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-		} catch (ApiException ex) {
-	        // Return failure response in case of exception
-	        ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, ex.getMessage(), null, null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
-	    } catch (Exception ex) {
-	        // General error handling for unexpected errors
-	        ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, "An error occurred while verifying OTP", null, null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-	    }
+		// OTP is valid, proceed to generate JWT token
+		UserDetails userDetails = this.userDetailsService.loadUserByUsername(otpRequest.getUsername());
+		String token = this.jwtTokenHelper.generateToken(userDetails);
+
+		// Clear OTP from user record (optional, for security)
+		user.setOtp(null);
+		user.setOtpExpiration(null);
+		userRepo.save(user);
+
+		// Create and return JWT response
+		JwtAuthResponse response = new JwtAuthResponse();
+		response.setToken(token);
+		response.setUser(mapper.map(user, UserDto.class));
+
+		// Return success response
+		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "OPT Varification Successful", response);
+		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+
 	}
-
 
 	private void authenticate(String username, String password) throws Exception {
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,
@@ -158,24 +144,20 @@ public class AuthContoller {
 	// Register New User API
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse> registerNewUser(@Valid @RequestBody UserDto userDto) {
-		try {
-			UserDto registeredUser = this.userService.registerNewUser(userDto);
-			ApiResponse apiResponse = new ApiResponse("SUCCESS", null, "User Registerd Successfully",registeredUser);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
-		} catch (ApiException ex) {
-			ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, ex.getMessage(), null, null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
-		}
-		catch (Exception e) {
-			ApiResponse apiResponse = new ApiResponse(AppConstants.FAILED, "Registration failed", null, null);
-	        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+		UserDto registeredUser = this.userService.registerNewUser(userDto);
+		ApiResponse apiResponse = new ApiResponse("SUCCESS", null, "User Registerd Successfully", registeredUser);
+		return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
 	}
 
 	// get loggedin user data
-	@GetMapping("/current-user/")
-	public ResponseEntity<UserDto> getUser(Principal principal) {
+	@GetMapping("/current-user")
+	public ResponseEntity<ApiResponse> getUser(Principal principal) {
 		User user = this.userRepo.findByEmail(principal.getName()).get();
-		return new ResponseEntity<UserDto>(this.mapper.map(user, UserDto.class), HttpStatus.OK);
+		if (user == null) {
+			return new ResponseEntity<>(new ApiResponse(AppConstants.FAILED, "User not found", null, null), HttpStatus.OK);
+		}
+		UserDto userDto = this.mapper.map(user, UserDto.class);
+		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "User fetched successfully", userDto);
+		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 }

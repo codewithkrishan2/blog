@@ -1,6 +1,7 @@
 package com.kksg.blog.services.impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -9,8 +10,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kksg.blog.entities.Category;
+import com.kksg.blog.exceptions.ApiException;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
 import com.kksg.blog.payloads.CategoryDto;
 import com.kksg.blog.repositories.CategoryRepo;
@@ -26,8 +29,13 @@ public class CategoryServiceImpl implements CategoryService {
 	private ModelMapper modelMapper;
 
 	@Override
-	@CachePut(value = "categories", key = "#categoryDto.categoryId")
+	@Transactional
 	public CategoryDto createCategory(CategoryDto categoryDto) {
+
+		Optional<Category> byCategoryTitle = this.categoryRepo.findByCategoryTitle(categoryDto.getCategoryTitle());
+		if (byCategoryTitle.isPresent()) {
+			throw new ApiException("Category with title " + categoryDto.getCategoryTitle() + " already exists");
+		}
 
 		Category parentCategory = null;
 		if (categoryDto.getParentCategoryId() != null) {
@@ -35,7 +43,6 @@ public class CategoryServiceImpl implements CategoryService {
 					.orElseThrow(() -> new ResourceNotFoundException("Category", "Parent Category Id",
 							categoryDto.getParentCategoryId()));
 		}
-
 		Category category = modelMapper.map(categoryDto, Category.class);
 		category.setParentCategory(parentCategory);
 		Category savedCategory = this.categoryRepo.save(category);
@@ -44,10 +51,17 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	@CachePut(value = "categories", key = "#categoryDto.categoryId")
+	@CachePut(value = "categories", key = "#categoryId")
 	public CategoryDto updateCategory(CategoryDto categoryDto, Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
+
+		if (!category.getCategoryTitle().equals(categoryDto.getCategoryTitle())) {
+			Optional<Category> byCategoryTitle = this.categoryRepo.findByCategoryTitle(categoryDto.getCategoryTitle());
+			if (byCategoryTitle.isPresent()) {
+				throw new ApiException("Category with title " + categoryDto.getCategoryTitle() + " already exists");
+			}
+		}
 		if (categoryDto.getParentCategoryId() != null) {
 			Category parentCategory = categoryRepo.findById(categoryDto.getParentCategoryId())
 					.orElseThrow(() -> new ResourceNotFoundException("Category", "Parent Category Id",
@@ -74,8 +88,6 @@ public class CategoryServiceImpl implements CategoryService {
 	public CategoryDto getCategoryById(Integer categoryId) {
 		Category category = this.categoryRepo.findById(categoryId)
 				.orElseThrow(() -> new ResourceNotFoundException("Category", "Category Id ", categoryId));
-//		return this.modelMapper.map(category, CategoryDto.class);
-		// Include subcategories in the response
 		CategoryDto categoryDto = modelMapper.map(category, CategoryDto.class);
 		categoryDto.setSubCategories(category.getSubCategories().stream()
 				.map(subCategory -> modelMapper.map(subCategory, CategoryDto.class)).collect(Collectors.toList()));
@@ -83,12 +95,9 @@ public class CategoryServiceImpl implements CategoryService {
 	}
 
 	@Override
-	@Cacheable(value = "categories", key = "'all_categories'") 
+	@Cacheable(value = "categories", key = "'all_categories'")
 	public List<CategoryDto> getAllCategory() {
 		List<Category> allCategories = this.categoryRepo.findAll();
-//		List<CategoryDto> categoryDtos = allCategory.stream().map((cat) -> this.modelMapper.map(cat, CategoryDto.class))
-//				.collect(Collectors.toList());
-//		return categoryDtos;
 		return allCategories.stream().map(category -> {
 			CategoryDto categoryDto = modelMapper.map(category, CategoryDto.class);
 			categoryDto.setSubCategories(category.getSubCategories().stream()
