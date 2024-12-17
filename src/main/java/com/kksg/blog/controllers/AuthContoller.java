@@ -12,7 +12,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,9 +57,9 @@ public class AuthContoller {
 	@Autowired
 	private EmailService emailService;
 
-	// password encoder
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+//	// password encoder
+//	@Autowired
+//	private PasswordEncoder passwordEncoder;
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse> createToken(@RequestBody JwtAuthRequest request) throws Exception {
@@ -69,13 +68,13 @@ public class AuthContoller {
 				.orElseThrow(() -> new ApiException("User not found"));
 		this.authenticate(request.getUsername(), request.getPassword());
 		Integer otp = 123456;
-		// String encryptedOtp = EncryptionUtil.encrypt(String.valueOf(otp));
 
 		System.out.println("-------------------------------" + otp);
-		String hashedOtp = passwordEncoder.encode(otp.toString());
-
-		System.out.println("---------------------------------" + hashedOtp);
-		user.setOtp(hashedOtp);
+//		String hashedOtp = passwordEncoder.encode(otp.toString());
+//
+//		System.out.println("---------------------------------" + hashedOtp);
+//		user.setOtp(hashedOtp);
+		user.setOtp(otp);
 		user.setOtpExpiration(LocalDateTime.now().plusMinutes(10)); // Set OTP expiration to 5 minutes
 
 		userRepo.save(user);
@@ -96,15 +95,22 @@ public class AuthContoller {
 				.orElseThrow(() -> new ApiException("User not found"));
 
 		// Check if the OTP is valid
-		Integer userOtp = otpRequest.getOtp();
+//		Integer userOtp = otpRequest.getOtp();
+//
+//		System.out.println("-------------------------------" + userOtp);
+//		boolean matches = passwordEncoder.matches(userOtp.toString(), user.getOtp());
 
-		System.out.println("-------------------------------" + userOtp);
-		boolean matches = passwordEncoder.matches(userOtp.toString(), user.getOtp());
-
-		if (!matches) {
+		
+		
+//		if (!matches) {
+//			throw new ApiException("Invalid OTP");
+//		}
+		
+		if (user.getOtp() != otpRequest.getOtp()) {
 			throw new ApiException("Invalid OTP");
 		}
 
+		
 		// Check if the OTP has expired
 		if (user.getOtpExpiration().isBefore(LocalDateTime.now())) {
 			throw new ApiException("OTP has expired");
@@ -115,7 +121,7 @@ public class AuthContoller {
 		String token = this.jwtTokenHelper.generateToken(userDetails);
 
 		// Clear OTP from user record (optional, for security)
-		user.setOtp(null);
+		user.setOtp(0);
 		user.setOtpExpiration(null);
 		userRepo.save(user);
 
