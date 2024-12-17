@@ -185,7 +185,7 @@ public class PostController {
 
 	}
 
-	@GetMapping("/post/{postId}/analytics")
+	@GetMapping("/post/analytics/{postId}")
 	public ResponseEntity<ApiResponse> getPostAnalytics(@PathVariable Integer postId) {
 		PostAnalyticsDto postAnalytics = postService.getPostAnalytics(postId);
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched post analytics",
@@ -194,7 +194,7 @@ public class PostController {
 
 	}
 
-	@GetMapping("/user/{userId}/analytics")
+	@GetMapping("/user/analytics/{userId}")
 	public ResponseEntity<ApiResponse> getUserAnalytics(@PathVariable Integer userId) {
 		UserAnalyticsDto userAnalytics = postService.getUserAnalytics(userId);
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched user analytics",

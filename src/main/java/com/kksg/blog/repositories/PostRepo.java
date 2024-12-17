@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.kksg.blog.entities.Category;
 import com.kksg.blog.entities.Post;
@@ -14,31 +15,29 @@ import com.kksg.blog.entities.User;
 
 public interface PostRepo extends JpaRepository<Post, Integer> {
 
-//	List<Post> findByUser(User user);
-//	List<Post> findByPostCategory(Category postCategory);
-//	List<Post> findByPostTitleContaining(String postTitle);
-
 	Optional<Post> findBySlug(String slug);
+
 	Boolean existsBySlug(String slug);
+
 	Long countByUser(User user);
-//	List<Post> findByTags_TagName(String tagName);
 
-//	@Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.likeCount DESC")
-//	List<Post> findTopTrendingPosts(LocalDateTime sevenDaysAgo);
-
-//	@Query("SELECT p FROM Post p WHERE p.postAddedDate >= :sevenDaysAgo ORDER BY p.viewCount DESC")
-	@Query("SELECT p FROM Post p " +
-	           "WHERE p.postAddedDate >= :fifteenDaysAgo " +
-	           "ORDER BY (p.likeCount + p.viewCount + size(p.comments)) DESC")    
+	@Query("SELECT p FROM Post p " + "WHERE p.postAddedDate >= :fifteenDaysAgo "
+			+ "ORDER BY (p.likeCount + p.viewCount + size(p.comments)) DESC")
 	Page<Post> findTopTrendingPosts(LocalDateTime fifteenDaysAgo, Pageable pageable);
 
-	// Pagination support for fetching posts by user
+	@Query("SELECT p FROM Post p " + "LEFT JOIN p.tags t " + "WHERE p.postTitle LIKE %:keyword% OR "
+			+ "p.postContent LIKE %:keyword% OR " + "p.user.name LIKE %:keyword% OR "
+			+ "p.postCategory.categoryTitle LIKE %:keyword% OR " + "t.tagName LIKE %:keyword% OR "
+			+ "p.metaTitle LIKE %:keyword% OR " + "p.metaDescription LIKE %:keyword% OR "
+			+ "p.metaKeywords LIKE %:keyword% OR " + "p.slug LIKE %:keyword%")
+	Page<Post> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
 	Page<Post> findByUser(User user, Pageable pageable);
-	// Pagination support for fetching posts by category
+
 	Page<Post> findByPostCategory(Category postCategory, Pageable pageable);
-	// Pagination support for fetching posts by title (using partial match)
+
 	Page<Post> findByPostTitleContaining(String postTitle, Pageable pageable);
-	// Pagination support for fetching posts by tag name
+
 	Page<Post> findByTags_TagName(String tagName, Pageable pageable);
 
 }

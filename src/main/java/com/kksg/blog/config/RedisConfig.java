@@ -1,5 +1,7 @@
 package com.kksg.blog.config;
 
+import java.time.Duration;
+
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -32,14 +34,13 @@ public class RedisConfig {
 						RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
 				.serializeValuesWith(RedisSerializationContext.SerializationPair
 						.fromSerializer(new GenericJackson2JsonRedisSerializer()));
-
 		return RedisCacheManagerBuilder.fromConnectionFactory(redisConnectionFactory).cacheDefaults(cacheConfiguration)
 				.build();
 	}
 
-	/**
-	 * @Bean RedisCacheConfiguration cacheConfiguration() { return
-	 *       RedisCacheConfiguration.defaultCacheConfig()
-	 *       .entryTtl(Duration.ofMinutes(5)) .disableCachingNullValues(); }
-	 */
+	@Bean
+	RedisCacheConfiguration cacheConfiguration() {
+		return RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(2)).disableCachingNullValues();
+	}
+
 }

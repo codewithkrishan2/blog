@@ -115,7 +115,40 @@ public class PostServiceImpl implements PostService {
 		if (post.getMetaKeywords() == null || post.getMetaKeywords().isEmpty()) {
 			post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent()));
 		}
+		//String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
+		//post.setSlug(ensureUniqueSlug(generatedSlug));
 
+		// Handle SEO fields - Use values from payload if provided, else generate defaults
+	    if (postDto.getMetaTitle() != null && !postDto.getMetaTitle().isEmpty()) {
+	        post.setMetaTitle(postDto.getMetaTitle());
+	    } else {
+	        // Set default meta title (same as post title)
+	        post.setMetaTitle(post.getPostTitle());
+	    }
+
+	    if (postDto.getMetaDescription() != null && !postDto.getMetaDescription().isEmpty()) {
+	        post.setMetaDescription(postDto.getMetaDescription());
+	    } else {
+	        // Generate default meta description (first 150 characters of content)
+	        post.setMetaDescription(post.getPostContent().substring(0, Math.min(150, post.getPostContent().length())));
+	    }
+
+	    if (postDto.getMetaKeywords() != null && !postDto.getMetaKeywords().isEmpty()) {
+	        post.setMetaKeywords(postDto.getMetaKeywords());
+	    } else {
+	        // Generate default keywords (based on content)
+	        post.setMetaKeywords(SlugUtil.generateKeywords(post.getPostContent()));
+	    }
+
+	    // Set slug - Use provided slug if exists, else generate it
+	    if (postDto.getSlug() != null && !postDto.getSlug().isEmpty()) {
+	        post.setSlug(ensureUniqueSlug(postDto.getSlug()));
+	    } else {
+	        String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
+	        post.setSlug(ensureUniqueSlug(generatedSlug)); // Ensure the slug is unique
+	    }
+		
+		
 		if (postDto.getTags() != null && !postDto.getTags().isEmpty()) {
 			Set<Tag> tags = postDto.getTags().stream().map(tagDto -> {
 				return tagRepository.findByTagName(tagDto.getTagName()).orElseGet(() -> {
@@ -127,8 +160,6 @@ public class PostServiceImpl implements PostService {
 			post.setTags(tags);
 		}
 
-		String generatedSlug = SlugUtil.generateSlug(post.getPostTitle());
-		post.setSlug(ensureUniqueSlug(generatedSlug));
 
 		// Set default post image if not provided
 		if (post.getPostImage() == null || post.getPostImage().isEmpty()) {
@@ -352,7 +383,7 @@ public class PostServiceImpl implements PostService {
 	public PostResponse searchPost(String keyword, Integer pageNumber, Integer pageSize, String sortBy,
 			String sortDir) {
 		Pageable pageable = PaginationUtil.createPageRequest(pageNumber, pageSize, sortBy, sortDir);
-		Page<Post> posts = this.postRepo.findByPostTitleContaining(keyword, pageable);
+		Page<Post> posts = this.postRepo.findByKeyword(keyword, pageable);
 		List<PostListDto> postDtos = posts.stream().map(post -> modelMapper.map(post, PostListDto.class))
 				.collect(Collectors.toList());
 

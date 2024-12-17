@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
 
 		Optional<User> byEmail = this.userRepo.findByEmail(user.getEmail());
 		if (byEmail.isPresent()) {
-	        throw new ResourceNotFoundException("User", "email", 1000000);
+	        throw new ApiException("Email already exists");
 	    }
 
 		User savedUser = this.userRepo.save(user);
@@ -62,14 +62,12 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDto updateUser(UserDto userDto, Integer userId) {
-
 		User user = this.userRepo.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User", "Id", userId));
 		user.setName(userDto.getName());
 		user.setEmail(userDto.getEmail());
 		user.setAbout(userDto.getAbout());
 		user.setPassword(userDto.getPassword());
-
 		User updatedUser = this.userRepo.save(user);
 		UserDto userToDtoUserUpdated = this.userToDtoUser(updatedUser);
 		return userToDtoUserUpdated;
