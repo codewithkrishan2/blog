@@ -22,6 +22,7 @@ import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.Tag;
 import com.kksg.blog.entities.User;
 import com.kksg.blog.entities.enums.PostStatus;
+import com.kksg.blog.exceptions.ApiException;
 import com.kksg.blog.exceptions.ResourceNotFoundException;
 import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
@@ -103,7 +104,7 @@ public class PostServiceImpl implements PostService {
 		post.setPostContent(postDto.getPostContent());
 		post.setPostCategory(category);
 		post.setUser(user);
-		post.setPostAddedDate(LocalDateTime.now());
+		post.setUpdatedOn(LocalDateTime.now());
 
 		// Handle SEO fields if not provided
 		if (post.getMetaTitle() == null || post.getMetaTitle().isEmpty()) {
@@ -490,6 +491,13 @@ public class PostServiceImpl implements PostService {
 		postResponse.setLastPage(postsPage.isLast());
 
 		return postResponse;
+	}
+
+	@Override
+	public PostDto getPostBySlug(String slug) {
+		Post post = postRepo.findBySlug(slug)
+				.orElseThrow(() -> new ApiException("Post not found"));
+		return this.modelMapper.map(post, PostDto.class);
 	}
 
 }

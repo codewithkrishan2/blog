@@ -15,11 +15,16 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,21 +35,33 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(
+	    name = "post",
+	    indexes = {
+	        @Index(name = "idx_post_title", columnList = "postTitle"),
+	        @Index(name = "idx_post_status", columnList = "status"),
+	        @Index(name = "idx_post_created_on", columnList = "createdOn"),
+	        @Index(name = "idx_post_slug", columnList = "slug")
+	    }
+	)
 public class Post {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer postId;
 	
-	@Column(length = 5000, nullable = false)
+	@Column(length = 250, nullable = false)
 	private String postTitle;
 	
-	@Column(length = 1000000000)
+	@Lob
+	@Column(columnDefinition = "TEXT")
 	private String postContent;
-	
 	private String postImage;
 	
-	private LocalDateTime postAddedDate;
+	@Column(updatable = false)
+    private LocalDateTime createdOn;
+    private LocalDateTime updatedOn;
+	private Boolean isDeleted;
 		
 	@ManyToOne
 	@JoinColumn(name = "category_id")
@@ -60,8 +77,13 @@ public class Post {
 	private PostStatus status;
 	
 	// SEO Fields
+	@Column(length = 255)
     private String metaTitle;
+	
+	@Column(length = 255)
     private String metaDescription;
+	
+	@Column(length = 500)
     private String metaKeywords;
     private String slug;  // Custom URL Slug
     
@@ -76,5 +98,16 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private Set<Tag> tags = new HashSet<>();
+    
+    @PrePersist
+    public void onCreate() {
+        createdOn = LocalDateTime.now();
+        updatedOn = createdOn;
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedOn = LocalDateTime.now();
+    }
 
 }

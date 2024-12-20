@@ -1,5 +1,6 @@
 package com.kksg.blog.payloads;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import lombok.Data;
@@ -10,7 +11,9 @@ public class PostListDto {
 	private String postTitle;
 	private String postContent;
 	private String postImage;
-	private String postAddedDate;
+    private LocalDateTime createdOn;
+    private LocalDateTime updatedOn;
+	private Boolean isDeleted;
 	private CategoryDto postCategory;
 	private String userName;
 	private Integer commentsCount;

@@ -61,10 +61,9 @@ public class User implements UserDetails {
     
     @Column(updatable = false)
     private LocalDateTime createdOn;
-    
     private LocalDateTime updatedOn;
     
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
 	private List<Post> posts = new ArrayList<>();
     
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
@@ -86,7 +85,6 @@ public class User implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		
 		return email;
 	}
 

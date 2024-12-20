@@ -200,7 +200,6 @@ public class PostController {
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched user analytics",
 				userAnalytics);
 		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-
 	}
 
 	@GetMapping("/post/trending")
@@ -213,12 +212,11 @@ public class PostController {
 		PostResponse postResponse = this.postService.getTrendingPosts(pageNumber, pageSize);
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched trending posts",
 				postResponse);
-
 		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 
-	@GetMapping("/post/searchByTag")
-	public ResponseEntity<ApiResponse> searchPostsByTag(@RequestParam String tagName,
+	@GetMapping("/post/searchByTag/{tagName}")
+	public ResponseEntity<ApiResponse> searchPostsByTag(@PathVariable String tagName,
 			@RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
 			@RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
 			@RequestParam(defaultValue = "postAddedDate", required = false) String sortBy,
@@ -228,6 +226,15 @@ public class PostController {
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched posts by tag",
 				postResponse);
 
+		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+	}
+	
+	//get posts by slug
+	@GetMapping("/post/slug/{slug}")
+	public ResponseEntity<ApiResponse> getPostBySlug(@PathVariable String slug) {
+		PostDto postBySlug = this.postService.getPostBySlug(slug);
+		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Successfully fetched post by slug",
+				postBySlug);
 		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 

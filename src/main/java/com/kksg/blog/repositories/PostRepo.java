@@ -21,7 +21,7 @@ public interface PostRepo extends JpaRepository<Post, Integer> {
 
 	Long countByUser(User user);
 
-	@Query("SELECT p FROM Post p " + "WHERE p.postAddedDate >= :fifteenDaysAgo "
+	@Query("SELECT p FROM Post p " + "WHERE p.updatedOn >= :fifteenDaysAgo "
 			+ "ORDER BY (p.likeCount + p.viewCount + size(p.comments)) DESC")
 	Page<Post> findTopTrendingPosts(LocalDateTime fifteenDaysAgo, Pageable pageable);
 

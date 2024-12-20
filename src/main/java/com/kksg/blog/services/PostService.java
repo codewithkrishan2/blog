@@ -42,5 +42,7 @@ public interface PostService {
 	PostResponse getPostByCategory(Integer categoryId, Integer pageNumber, Integer pageSize, String sortBy,
 			String sortDir);
 
+	PostDto getPostBySlug(String slug);
+
 
 }
