@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import com.kksg.blog.entities.Category;
 import com.kksg.blog.entities.Post;
 import com.kksg.blog.entities.User;
+import com.kksg.blog.entities.enums.PostStatus;
 
 public interface PostRepo extends JpaRepository<Post, Integer> {
 
@@ -39,5 +40,7 @@ public interface PostRepo extends JpaRepository<Post, Integer> {
 	Page<Post> findByPostTitleContaining(String postTitle, Pageable pageable);
 
 	Page<Post> findByTags_TagName(String tagName, Pageable pageable);
+
+	Page<Post> findByUser_UserIdAndStatus(Integer userId, PostStatus status, Pageable pageable);
 
 }

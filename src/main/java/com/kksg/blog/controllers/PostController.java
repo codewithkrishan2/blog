@@ -238,4 +238,17 @@ public class PostController {
 		return new ResponseEntity<>(apiResponse, HttpStatus.OK);
 	}
 
+    @GetMapping("/user/{userId}/status/{status}")
+    public ResponseEntity<PostResponse> getPostsByUserAndStatus(
+            @PathVariable Integer userId,
+            @PathVariable PostStatus status,
+            @RequestParam(defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+			@RequestParam(defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+			@RequestParam(defaultValue = "postAddedDate", required = false) String sortBy,
+			@RequestParam(defaultValue = AppConstants.SORT_DIR, required = false) String sortDir) {
+        
+        PostResponse postResponse = postService.getPostsByUserAndStatus(userId, status, pageNumber, pageSize);
+        return ResponseEntity.ok(postResponse);
+    }
+	
 }

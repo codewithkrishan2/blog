@@ -44,5 +44,7 @@ public interface PostService {
 
 	PostDto getPostBySlug(String slug);
 
+	PostResponse getPostsByUserAndStatus(Integer userId, PostStatus status, Integer pageNumber, Integer pageSize);
+
 
 }

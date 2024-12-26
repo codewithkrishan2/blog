@@ -24,18 +24,28 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @NoArgsConstructor
+@Table(
+	    name = "user",
+	    indexes = {
+	        @Index(name = "idx_user_email", columnList = "email", unique = true), // Email is unique and frequently queried for login/authentication
+	        @Index(name = "idx_user_status", columnList = "status"),              // Status may be queried for active/inactive users
+	        @Index(name = "idx_user_created_on", columnList = "createdOn")        // CreatedOn can be used for sorting or filtering users
+	    }
+	)
 public class User implements UserDetails {
 	
     @Serial

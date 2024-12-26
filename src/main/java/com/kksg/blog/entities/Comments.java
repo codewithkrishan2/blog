@@ -11,16 +11,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
+@Data
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
 public class Comments {
-	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer commentId;
@@ -42,12 +37,7 @@ public class Comments {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")
-    private Comments parentComment; // To hold the parent comment for replies
-
-    
-//	@OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-//	private Set<Likes> likes = new HashSet<>();  // A collection of likes for this comment
-	
+    private Comments parentComment;
 	
 	@PrePersist
     public void onPrePersist() {

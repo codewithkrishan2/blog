@@ -476,7 +476,7 @@ public class PostServiceImpl implements PostService {
 	@Override
 	@Cacheable(value = "posts", key = "#tagName")
 	public PostResponse searchPostsByTag(String tagName, Integer pageNumber, Integer pageSize) {
-		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("postAddedDate").descending());
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("updatedOn").descending());
 		Page<Post> postsPage = postRepo.findByTags_TagName(tagName, pageable);
 		List<PostListDto> postDtos = postsPage.stream().map(post -> modelMapper.map(post, PostListDto.class))
 				.collect(Collectors.toList());
@@ -500,4 +500,35 @@ public class PostServiceImpl implements PostService {
 		return this.modelMapper.map(post, PostDto.class);
 	}
 
+	@Override
+    public PostResponse getPostsByUserAndStatus(Integer userId, PostStatus status, Integer pageNumber, Integer pageSize) {
+        // Set default page size if pageSize is greater than the limit (e.g., 10)
+        int maxPageSize = 10;
+        if (pageSize > maxPageSize) {
+            pageSize = maxPageSize;
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdOn").descending());
+
+        // Fetch posts by userId and status
+        Page<Post> postsPage = postRepo.findByUser_UserIdAndStatus(userId, status, pageable);
+
+        // Map posts to PostListDto
+        List<PostListDto> postDtos = postsPage.stream()
+                .map(post -> modelMapper.map(post, PostListDto.class))
+                .collect(Collectors.toList());
+
+        // Create PostResponse object
+        PostResponse postResponse = new PostResponse();
+        postResponse.setContent(postDtos);
+        postResponse.setPageNumber(postsPage.getNumber());
+        postResponse.setPageSize(postsPage.getSize());
+        postResponse.setTotalElements(postsPage.getTotalElements());
+        postResponse.setTotalPages(postsPage.getTotalPages());
+        postResponse.setFirstPage(postsPage.isFirst());
+        postResponse.setLastPage(postsPage.isLast());
+
+        return postResponse;
+    }
+	
 }
