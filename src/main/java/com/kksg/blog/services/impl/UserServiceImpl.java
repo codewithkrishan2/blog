@@ -55,8 +55,7 @@ public class UserServiceImpl implements UserService {
 		user.setAbout(userDto.getAbout());
 		user.setPassword(userDto.getPassword());
 		User updatedUser = this.userRepo.save(user);
-		UserDto userToDtoUserUpdated = this.userToDtoUser(updatedUser);
-		return userToDtoUserUpdated;
+		return this.userToDtoUser(updatedUser);
 	}
 
 	@Override
@@ -69,10 +68,9 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public List<UserDto> getAllUsers() {
 		List<User> users = this.userRepo.findAll();
-		List<UserDto> userDtos = users.stream()
-								.map(user-> this.userToDtoUser(user))
+		return users.stream()
+								.map(this::userToDtoUser)
 								.collect(Collectors.toList());
-		return userDtos;
 	}
 
 	//Delete use by user id
@@ -88,49 +86,27 @@ public class UserServiceImpl implements UserService {
 	}
 	
 
-	//dto to user we were converting it manually, there are libraries available we can use that to convert
-
 	public User dtoToUser(UserDto userDto) {
-		
-		//this will be converted automatically using ModelMapper
-		User user = this.modelMapper.map(userDto, User.class);
-		
-		/*
-		//This is the manual process converting one object to another
-		User user = new User();
-		user.setId(userDto.getId());
-		user.setName(userDto.getName());
-		user.setAbout(userDto.getAbout());
-		user.setEmail(userDto.getEmail());
-		user.setPassword(userDto.getPassword());
-		*/
-		return user;
+		return this.modelMapper.map(userDto, User.class);
 		
 	}
 
-	//user to dto we are converting it manually
 	public UserDto userToDtoUser(User user) {
-		UserDto userDto = this.modelMapper.map(user, UserDto.class);
-		return userDto;
+		return this.modelMapper.map(user, UserDto.class);
 	}
 
 	@Override
 	public UserDto registerNewUser(UserDto userDto) {
 		
 		User user = this.modelMapper.map(userDto, User.class);
-		
-		
 		//encoding the password
 		user.setPassword(this.passwordEncoder.encode(user.getPassword()));
 		
 		//setting the default role
 		Role role = this.roleRepo.findById(AppConstants.NORLMAL_USER).get();
-		
 		user.getRoles().add(role);
-		
 		User savedNewUser = this.userRepo.save(user);
-		UserDto userDtoSaved = this.modelMapper.map(savedNewUser, UserDto.class);
-		return userDtoSaved;
+		return this.modelMapper.map(savedNewUser, UserDto.class);
 	}
 
 

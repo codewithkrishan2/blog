@@ -92,7 +92,7 @@ public class PostServiceImpl implements PostService {
 		Pageable p = PageRequest.of(pageNumber, pageSize, sort);
 		Page<Post> page = this.postRepo.findAll(p);
 		List<Post> posts = page.getContent();
-		List<PostDto> postDtos = posts.stream().map((post)-> this.modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
+		List<PostDto> postDtos = posts.stream().map(post-> this.modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
 		PostResponse postResponse = new PostResponse();
 		
 		postResponse.setContent(postDtos);
@@ -127,14 +127,15 @@ public class PostServiceImpl implements PostService {
 							"User", "User Id", userId));
 		List<Post> postsByUser = this.postRepo.findByUser(user);
 		List<PostDto> postDtos = postsByUser.stream()
-				.map((post)-> this.modelMapper.map(
-						post, PostDto.class))
-				.collect(Collectors.toList());
+											.map((post)-> this.modelMapper.map(
+													post, PostDto.class))
+											.collect(Collectors.toList());
 		return postDtos;
 	}
 
 	@Override
 	public List<PostDto> searchPost(String keyword) {
+		
 		List<Post> posts = this.postRepo.findByPostTitleContaining(keyword);
 		List<PostDto> postDtos = posts.stream().map((post)-> modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
 		

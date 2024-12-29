@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 		
 		String message = ex.getMessage();
 		ApiResponse apiResponse = new ApiResponse(message, false);
-		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.NOT_FOUND);
+		return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
 	}
 	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
@@ -45,16 +45,15 @@ public class GlobalExceptionHandler {
 		
 		String message = ex.getMessage();
 		ApiResponse apiResponse = new ApiResponse(message, true);
-		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
 	}
 	
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	public ResponseEntity<ApiResponse> methodArgumentTypeMismatchException( MethodArgumentTypeMismatchException ex) {
 		
-		String message = ex.getMessage();
-		message = "You can enter only Integer Value as Id in url";
+		String message = "You can enter only Integer Value as Id in url";
 		ApiResponse apiResponse = new ApiResponse(message, false);
-		return new ResponseEntity<ApiResponse>(apiResponse, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
 	}
 	
 }

@@ -19,6 +19,7 @@ public class Comments {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer commentId;
 	
+	
 	private String content;
 	
 	//private String username;

@@ -44,6 +44,7 @@ public class AuthContoller {
 
 	@Autowired
 	private UserRepo userRepo;
+	
 	@Autowired
 	private ModelMapper mapper;
 
@@ -84,7 +85,7 @@ public class AuthContoller {
 
 	@GetMapping("/current-user/")
 	public ResponseEntity<UserDto> getUser(Principal principal) {
-		User user = this.userRepo.findByEmail(principal.getName()).get();
+		User user = this.userRepo.findByEmail(principal.getName()).orElseThrow(() -> new ApiException("User not found"));
 		return new ResponseEntity<UserDto>(this.mapper.map(user, UserDto.class), HttpStatus.OK);
 	}
 }
