@@ -69,7 +69,7 @@ public class CategoryServiceImpl implements CategoryService {
 			category.setParentCategory(parentCategory);
 		}
 		category.setCategoryTitle(categoryDto.getCategoryTitle());
-		category.setCategoryDescription(categoryDto.getCategoryDescription());
+//		category.setCategoryDescription(categoryDto.getCategoryDescription());
 		Category updatedCategory = this.categoryRepo.save(category);
 		return this.modelMapper.map(updatedCategory, CategoryDto.class);
 	}

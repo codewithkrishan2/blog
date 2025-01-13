@@ -29,7 +29,7 @@ public class Category {
 	
 	private String categoryTitle;
 	
-	private String categoryDescription;
+//	private String categoryDescription;
 	
 	@OneToMany(mappedBy = "postCategory", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<Post> posts = new ArrayList<>();

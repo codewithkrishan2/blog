@@ -29,7 +29,7 @@ public class CategoryController {
 	private CategoryService categoryService;
 
 	// Create a new Category
-	@PostMapping("/create")
+	@PostMapping
 	public ResponseEntity<ApiResponse> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
 		CategoryDto createdCategory = categoryService.createCategory(categoryDto);
 		ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, "Category created successfully",
@@ -39,7 +39,7 @@ public class CategoryController {
 	}
 
 	// Update an existing Category
-	@PutMapping("/update/{categoryId}")
+	@PutMapping("/{categoryId}")
 	public ResponseEntity<ApiResponse> updateCategory(@Valid @RequestBody CategoryDto categoryDto,
 			@PathVariable Integer categoryId) {
 		CategoryDto updatedCategory = categoryService.updateCategory(categoryDto, categoryId);
@@ -68,7 +68,7 @@ public class CategoryController {
 	}
 
 	// Get all Categories
-	@GetMapping("/all")
+	@GetMapping
 	public ResponseEntity<ApiResponse> getAllCategories() {
 		List<CategoryDto> allCategories = categoryService.getAllCategory();
 		ApiResponse response = new ApiResponse(AppConstants.SUCCESS, null, null, allCategories);

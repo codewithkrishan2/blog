@@ -19,9 +19,9 @@ public class CategoryDto {
 	@Size(min = 3, message = "Category Title Must be min 3 char")
 	private String categoryTitle;
 
-	@NotBlank
-	@Size(min = 20, message = "Description Must be min 20 char")
-	private String categoryDescription;
+//	@NotBlank
+//	@Size(min = 20, message = "Description Must be min 20 char")
+//	private String categoryDescription;
 
 	private Integer parentCategoryId; // Reference to parent category ID
 	private List<CategoryDto> subCategories; // List of sub-categories
