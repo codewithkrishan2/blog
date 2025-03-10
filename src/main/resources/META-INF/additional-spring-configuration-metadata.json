@@ -1,5 +1,22 @@
-{"properties": [{
-  "name": "project.image",
-  "type": "java.lang.String",
-  "description": "A description for 'project.image'"
-}]}
+{"properties": [
+  {
+    "name": "project.image",
+    "type": "java.lang.String",
+    "description": "A description for 'project.image'"
+  },
+  {
+    "name": "config.cloudinary.cloud.name",
+    "type": "java.lang.String",
+    "description": "A description for 'config.cloudinary.cloud.name'"
+  },
+  {
+    "name": "config.cloudinary.cloud.key",
+    "type": "java.lang.String",
+    "description": "A description for 'config.cloudinary.cloud.key'"
+  },
+  {
+    "name": "config.cloudinary.cloud.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'config.cloudinary.cloud.secret'"
+  }
+]}

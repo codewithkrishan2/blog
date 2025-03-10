@@ -7,16 +7,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
+import com.cloudinary.utils.ObjectUtils;
+import com.kksg.blog.payloads.ImageInfo;
 import com.kksg.blog.services.FileService;
+import com.kksg.blog.utils.AppConstants;
 
 
 @Service
 public class FileServiceImpl implements FileService {
+	
+	@Autowired
+	private Cloudinary cloudinary;
+	
 
 	//Upload Image
 	@Override
@@ -68,4 +79,34 @@ public class FileServiceImpl implements FileService {
 		return iStream;
 	}
 
+	@Override
+	public ImageInfo uploadImageToCloudnary(MultipartFile file) throws IOException {
+		Map<?, ?> resultMap = cloudinary.uploader()
+			.upload(file.getBytes(), ObjectUtils.emptyMap());
+		
+		return new ImageInfo(
+				resultMap.get("public_id").toString(),
+				resultMap.get("secure_url").toString(),
+				resultMap.get("format").toString()
+				);
+		
+	}
+
+	//serve images from the Cloudnary
+	@Override
+	public String generateImageUrlFromCloudnary(String publicId) {
+		return cloudinary.url().generate(publicId);
+	}
+
+	//to serve images in efficient manner from cloudnary
+	@Override
+	public String generateTransformedImageUrlFromCloudnary(String publicId) {
+		return cloudinary.url().transformation(
+				new Transformation<>()
+						.width(AppConstants.CLOUD_IMAGE_WIDTH)
+						.height(AppConstants.CLOUD_IMAGE_HEIGHT)
+						.crop(AppConstants.CLOUD_IMAGE_CROP)
+				).generate(publicId);
+	}
+	
 }

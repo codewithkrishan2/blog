@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.kksg.blog.entities.enums.PostStatus;
 import com.kksg.blog.payloads.ApiResponse;
+import com.kksg.blog.payloads.ImageInfo;
 import com.kksg.blog.payloads.PostAnalyticsDto;
 import com.kksg.blog.payloads.PostDto;
 import com.kksg.blog.payloads.PostResponse;
@@ -150,7 +151,13 @@ public class PostController {
 			throws IOException {
 		PostDto postById = this.postService.getPostById(postId);
 		String fileName = this.fileService.uploadImage(path, image);
-		postById.setPostImage(fileName);
+		//upload image to cloudnary 
+		ImageInfo imageInfo = this.fileService.uploadImageToCloudnary(image);
+		System.out.println("file uploading to cloudnary");
+		//get image url from cloudnary
+		String imageUrlFromCloudnary = this.fileService.generateImageUrlFromCloudnary(imageInfo.publicId());
+		System.out.println("file URL from cloudnary"+imageUrlFromCloudnary);
+		postById.setPostImage(imageUrlFromCloudnary);
 		PostDto updatedPost = this.postService.updatePost(postById, postId);
 		ApiResponse apiResponse = new ApiResponse(AppConstants.SUCCESS, null, "Image Uploaded Successfully",
 				updatedPost);

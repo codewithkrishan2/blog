@@ -12,5 +12,8 @@ public class AppConstants {
     public static final Integer ROLE_AUTHOR = 1003;
     public static final String FAILED = "FAILED";
     public static final String SUCCESS = "SUCCESS";
+    public static final int CLOUD_IMAGE_WIDTH = 300;
+	public static final int CLOUD_IMAGE_HEIGHT = 300;
+	public static final String CLOUD_IMAGE_CROP = "fill";
     
 }
